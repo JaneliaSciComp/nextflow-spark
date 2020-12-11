@@ -24,7 +24,8 @@ workflow {
     res = spark_cluster(spark_log_dir, spark_workers)
     res \
     | map {[
-        it, 
+        it,
+        spark_log_dir,
         spark_app_jar, 
         spark_app_main, 
         spark_app_args]} \

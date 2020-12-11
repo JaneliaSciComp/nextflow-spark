@@ -35,6 +35,7 @@ process spark_worker {
     remove_log_file(spark_worker_log_file)
     spark_config_name = spark_config_name(spark_log_dir)
     """
+    export SPARK_CONF_DIR=${spark_log_dir}
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
     --properties-file ${spark_config_name} \
@@ -69,6 +70,8 @@ def create_default_spark_config(config_name) {
     sparkConfig.put("spark.rpc.retry.wait", "30s");
     sparkConfig.put("spark.kryoserializer.buffer.max", "1024m");
     sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
+    sparkConfig.put("spark.driver.maxResultSize", "0")
+    sparkConfig.put("spark.driver.memory", "14g")
 
     sparkConfig.store(configFile.newWriter(), null)
 }
@@ -181,7 +184,7 @@ process spark_submit_java {
     container = 'bde2020/spark-submit:3.0.1-hadoop3.2'
 
     input:
-    tuple val(spark_uri), path(app_jar),  val(app_main), val(app_args)
+    tuple val(spark_uri), path(spark_log_dir), path(app_jar),  val(app_main), val(app_args)
 
     output:
     stdout
@@ -193,17 +196,17 @@ process spark_submit_java {
         submit_args_list.add("--class ${app_main}")
     }
     submit_args_list.add("--conf")
-    submit_args_list.add("spark_executor_cores=5")
+    submit_args_list.add("spark.executor.cores=4")
     submit_args_list.add("--executor-memory")
-    submit_args_list.add("1g")
+    submit_args_list.add("18g")
     submit_args_list.add("--conf")
     submit_args_list.add("spark.default.parallelism=4")
     submit_args_list.add(app_jar)
     submit_args_list.addAll(app_args)
     submit_args = submit_args_list.join(' ')
     """
+    export SPARK_CONF_DIR=${spark_log_dir}
     echo ${submit_args}
-    echo ${submit_args_list}
     /spark/bin/spark-submit ${submit_args}
     """
 }

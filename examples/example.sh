@@ -1,6 +1,6 @@
 ./main.nf -profile localdocker \
-	--runtime_opts "-v $PWD/local:$PWD/local" \
-	--workers 2 \
+	--runtime_opts "-e SPARK_LOCAL_DIRS=/tmp -e SPARK_WORKER_LOG=$PWD/local -v $PWD/local:$PWD/local" \
+	--workers 3 \
 	--spark_log_dir $PWD/local \
 	--app_jar $PWD/local/app.jar \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
