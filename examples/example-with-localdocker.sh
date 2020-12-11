@@ -1,5 +1,5 @@
 ./main.nf -profile localdocker \
-	--runtime_opts "-e SPARK_LOCAL_DIRS=/tmp -e SPARK_WORKER_LOG=$PWD/local -v $PWD/local:$PWD/local" \
+	--runtime_opts "-e SPARK_CONF_DIR=$PWD/local -v $PWD/local:$PWD/local" \
 	--workers 1 \
 	--spark_log_dir $PWD/local \
 	--app_jar $PWD/local/app.jar \

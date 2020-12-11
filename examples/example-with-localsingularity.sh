@@ -1,5 +1,5 @@
 ./main.nf -profile localsingularity \
-	--runtime_opts "-B $PWD/local:$PWD/local" \
+	--runtime_opts "-B $PWD/local:$PWD/local --env SPARK_CONF_DIR=$PWD/local" \
 	--workers 1 \
 	--spark_log_dir "$PWD/local" \
 	--app_jar "$PWD/local/app.jar" \
