@@ -209,9 +209,6 @@ process spark_submit_java {
     """
     echo ${submit_args}
 
-    SPARK_LOCAL_IP=\$(ifconfig eth0 | grep inet | awk '\$1=="inet" {print \$2}')
-    SPARK_PUBLIC_DNS=\$SPARK_LOCAL_IP
-
     /spark/bin/spark-submit --deploy-mode cluster ${submit_args}
     """
 }
