@@ -21,7 +21,6 @@ spark_app_args = params.app_args?.tokenize(',')
 
 
 workflow {
-    println ("!!!!! APP ARGS ${spark_app_args.size()}" + spark_app_args)
     res = spark_cluster(spark_log_dir, spark_workers)
     res \
     | map {[

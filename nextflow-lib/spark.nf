@@ -73,8 +73,6 @@ def create_default_spark_config(config_name) {
     sparkConfig.put("spark.rpc.retry.wait", "30s");
     sparkConfig.put("spark.kryoserializer.buffer.max", "1024m");
     sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
-    sparkConfig.put("spark.driver.maxResultSize", "0")
-    sparkConfig.put("spark.driver.memory", "14g")
 
     sparkConfig.store(configFile.newWriter(), null)
 }
@@ -199,18 +197,22 @@ process spark_submit_java {
         submit_args_list.add("--class ${app_main}")
     }
     submit_args_list.add("--conf")
-    submit_args_list.add("spark.executor.cores=4")
+    submit_args_list.add("spark.executor.cores=2")
     submit_args_list.add("--executor-memory")
-    submit_args_list.add("18g")
+    submit_args_list.add("4g")
     submit_args_list.add("--conf")
-    submit_args_list.add("spark.default.parallelism=4")
+    submit_args_list.add("spark.default.parallelism=2")
     submit_args_list.add(app_jar)
     submit_args_list.addAll(app_args)
     submit_args = submit_args_list.join(' ')
 
     """
     echo ${submit_args}
-    /spark/bin/spark-submit ${submit_args}
+
+    SPARK_LOCAL_IP=\$(ifconfig eth0 | grep inet | awk '\$1=="inet" {print \$2}')
+    SPARK_PUBLIC_DNS=\$SPARK_LOCAL_IP
+
+    /spark/bin/spark-submit --deploy-mode cluster ${submit_args}
     """
 }
 
