@@ -213,3 +213,16 @@ process spark_submit_java {
     /spark/bin/spark-submit ${submit_args}
     """
 }
+
+process terminate_spark {
+    input:
+    val(terminate)
+
+    output:
+    stdout
+
+    exec:
+    println "Terminate spark"
+    if (terminate)
+        System.exit(0)
+}

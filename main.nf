@@ -5,6 +5,7 @@ nextflow.enable.dsl=2
 include {
     spark_cluster;
     spark_submit_java;
+    terminate_spark;
 } from './nextflow-lib/spark'
 
 params.workers = 3
@@ -30,5 +31,7 @@ workflow {
         spark_app_main, 
         spark_app_args]} \
     | spark_submit_java \
+    | map { true }
+    | terminate_spark
     | view
 }
