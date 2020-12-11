@@ -36,6 +36,8 @@ process spark_worker {
     spark_config_name = spark_config_name(spark_log_dir)
     """
     export SPARK_CONF_DIR=${spark_log_dir}
+    export SPARK_WORKER_LOG=${spark_log_dir}
+
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
     --properties-file ${spark_config_name} \
@@ -206,6 +208,8 @@ process spark_submit_java {
     submit_args = submit_args_list.join(' ')
     """
     export SPARK_CONF_DIR=${spark_log_dir}
+    export SPARK_WORKER_LOG=${spark_log_dir}
+
     echo ${submit_args}
     /spark/bin/spark-submit ${submit_args}
     """
