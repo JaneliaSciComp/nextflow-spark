@@ -9,10 +9,14 @@ process spark_master {
     script:
     spark_master_log_file = spark_master_log(spark_log_dir)
     remove_log_file(spark_master_log_file)
+    spark_config_name = spark_config_name(spark_log_dir)
+    create_default_spark_config(spark_config_name)
     """
     echo "Spark master log: ${spark_master_log_file}"
     /spark/bin/spark-class \
-    org.apache.spark.deploy.master.Master &> ${spark_master_log_file}
+    org.apache.spark.deploy.master.Master \
+    --properties-file ${spark_config_name} \
+    &> ${spark_master_log_file}
     """
 }
 
@@ -29,13 +33,16 @@ process spark_worker {
     spark_master_uri = extract_spark_uri(spark_master_log_file)
     spark_worker_log_file = spark_worker_log(worker, spark_log_dir)
     remove_log_file(spark_worker_log_file)
+    spark_config_name = spark_config_name(spark_log_dir)
     """
     /spark/bin/spark-class \
-    org.apache.spark.deploy.worker.Worker ${spark_master_uri} &> ${spark_worker_log_file}
+    org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
+    --properties-file ${spark_config_name} \
+    &> ${spark_worker_log_file}
     """
 }
 
-process check_spark {
+process check_spark_cluster {
     input:
     path(spark_log_dir)
     val(workers)
@@ -47,6 +54,23 @@ process check_spark {
     spark_master_log_file = spark_master_log(spark_log_dir)
     wait_for_all_workers(spark_log_dir, workers)
     spark_master_uri = extract_spark_uri(spark_master_log_file)
+}
+
+def spark_config_name(spark_dir) {
+    return "${spark_dir}/spark-defaults.conf"
+}
+
+def create_default_spark_config(config_name) {
+    Properties sparkConfig = new Properties()
+    File configFile = new File(config_name)
+
+    sparkConfig.put("spark.rpc.askTimeout", "300s");
+    sparkConfig.put("spark.storage.blockManagerHeartBeatMs", "30000");
+    sparkConfig.put("spark.rpc.retry.wait", "30s");
+    sparkConfig.put("spark.kryoserializer.buffer.max", "1024m");
+    sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
+
+    sparkConfig.store(configFile.newWriter(), null)
 }
 
 def spark_master_log(spark_log_dir) {
@@ -138,7 +162,7 @@ workflow spark_cluster {
     spark_master(spark_log_dir)
     worker_channels | spark_worker
     
-    check_spark(spark_log_dir, workers) | set {res}
+    check_spark_cluster(spark_log_dir, workers) | set {res}
 
     emit:
     res
@@ -151,4 +175,35 @@ def spark_worker_channels(spark_log_dir, nworkers) {
         worker_channels.add([i+1, spark_log_dir])
     }
     return Channel.fromList(worker_channels)
+}
+
+process spark_submit_java {
+    container = 'bde2020/spark-submit:3.0.1-hadoop3.2'
+
+    input:
+    tuple val(spark_uri), path(app_jar),  val(app_main), val(app_args)
+
+    output:
+    stdout
+    
+    script:
+    // prepare submit args
+    submit_args_list = ["--master ${spark_uri}"]
+    if (app_main != "") {
+        submit_args_list.add("--class ${app_main}")
+    }
+    submit_args_list.add("--conf")
+    submit_args_list.add("spark_executor_cores=5")
+    submit_args_list.add("--executor-memory")
+    submit_args_list.add("1g")
+    submit_args_list.add("--conf")
+    submit_args_list.add("spark.default.parallelism=4")
+    submit_args_list.add(app_jar)
+    submit_args_list.addAll(app_args)
+    submit_args = submit_args_list.join(' ')
+    """
+    echo ${submit_args}
+    echo ${submit_args_list}
+    /spark/bin/spark-submit ${submit_args}
+    """
 }
