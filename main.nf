@@ -7,10 +7,11 @@ include {
     spark_worker;
 } from './nextflow-lib/spark'
 
-spark_master_log=file(params.spark_master_log)
+spark_log_dir=file(params.spark_log_dir)
 
 workflow {
-    Channel.from(spark_master_log) | 
-    spark_master | 
-    view
+    Channel.from(spark_log_dir) | 
+    (spark_master & spark_worker) | 
+    mix |
+    view 
 }
