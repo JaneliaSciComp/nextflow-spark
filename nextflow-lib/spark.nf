@@ -20,7 +20,7 @@ process spark_worker {
     container = 'bde2020/spark-worker:3.0.1-hadoop3.2'
 
     input:
-    path spark_log_dir
+    tuple val(worker), path(spark_log_dir)
 
     output:
     stdout
@@ -28,7 +28,7 @@ process spark_worker {
     script:
     spark_master_log_file = spark_master_log(spark_log_dir)
     spark_master_uri = extract_spark_uri(spark_master_log_file)
-    spark_worker_log_file = spark_worker_log(spark_log_dir)
+    spark_worker_log_file = spark_worker_log(worker, spark_log_dir)
     """
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} &> ${spark_worker_log_file}
@@ -39,8 +39,8 @@ def spark_master_log(spark_log_dir) {
     return "${spark_log_dir}/master.log"
 }
 
-def spark_worker_log(spark_log_dir) {
-    return "${spark_log_dir}/worker.log"
+def spark_worker_log(worker, spark_log_dir) {
+    return "${spark_log_dir}/worker-${worker}.log"
 }
 
 def extract_spark_uri(spark_master_log_name) {
@@ -48,7 +48,6 @@ def extract_spark_uri(spark_master_log_name) {
     while ((uri = search_spark_uri(spark_master_log_name)) == null) {
         sleep(5000)
     }
-    println("!!!!Found URI=$uri")
     return uri
 }
 
@@ -74,3 +73,23 @@ def search_spark_uri(spark_master_log_name) {
     }
 }
 
+def spark_worker_channels(spark_log_dir, nworkers) {
+    def worker_channels = []
+    for (int i = 0; i < nworkers; i++) {
+        println("Prepare input for worker ${i+1}")
+        worker_channels.add([i+1, spark_log_dir])
+    }
+    return Channel.fromList(worker_channels)
+}
+
+workflow spark_cluster {
+    take: 
+    spark_log_dir
+    workers
+
+    main:
+    worker_channels = spark_worker_channels(spark_log_dir, workers)
+    spark_master(spark_log_dir)
+    worker_channels | spark_worker 
+
+}
