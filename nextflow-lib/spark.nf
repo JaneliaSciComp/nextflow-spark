@@ -11,8 +11,10 @@ process spark_master {
     remove_log_file(spark_master_log_file)
     spark_config_name = spark_config_name(spark_log_dir)
     create_default_spark_config(spark_config_name)
+
     """
     echo "Spark master log: ${spark_master_log_file}"
+
     /spark/bin/spark-class \
     org.apache.spark.deploy.master.Master \
     --properties-file ${spark_config_name} \
@@ -34,12 +36,11 @@ process spark_worker {
     spark_worker_log_file = spark_worker_log(worker, spark_log_dir)
     remove_log_file(spark_worker_log_file)
     spark_config_name = spark_config_name(spark_log_dir)
-    """
-    export SPARK_CONF_DIR=${spark_log_dir}
-    export SPARK_WORKER_LOG=${spark_log_dir}
 
+    """
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
+    -d ${spark_log_dir} \
     --properties-file ${spark_config_name} \
     &> ${spark_worker_log_file}
     """
@@ -206,10 +207,8 @@ process spark_submit_java {
     submit_args_list.add(app_jar)
     submit_args_list.addAll(app_args)
     submit_args = submit_args_list.join(' ')
-    """
-    export SPARK_CONF_DIR=${spark_log_dir}
-    export SPARK_WORKER_LOG=${spark_log_dir}
 
+    """
     echo ${submit_args}
     /spark/bin/spark-submit ${submit_args}
     """
