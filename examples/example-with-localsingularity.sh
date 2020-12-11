@@ -1,8 +1,8 @@
 ./main.nf -profile localsingularity \
 	--runtime_opts "-B $PWD/local:$PWD/local" \
 	--workers 1 \
-	--spark_log_dir $PWD/local \
-	--app_jar $PWD/local/app.jar \
+	--spark_log_dir "$PWD/local" \
+	--app_jar "$PWD/local/app.jar" \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
 	--app_args \
 	"searchLocalFiles, \
