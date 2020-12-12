@@ -207,9 +207,20 @@ process spark_submit_java {
     submit_args = submit_args_list.join(' ')
 
     """
-    echo ${submit_args}
+    SPARK_LOCAL_IP=\$(ifconfig eth0 | grep inet | awk '\$1=="inet" {print \$2}' | sed s/addr://g)
 
-    /spark/bin/spark-submit --deploy-mode cluster ${submit_args}
+    echo "\
+    --deploy-mode client \
+    --conf spark.driver.host=\${SPARK_LOCAL_IP} \
+    --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
+    ${submit_args} \
+    "
+
+    /spark/bin/spark-submit \
+    --deploy-mode client \
+    --conf spark.driver.host=\${SPARK_LOCAL_IP} \
+    --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
+    ${submit_args}
     """
 }
 
