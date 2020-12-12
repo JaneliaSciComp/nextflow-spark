@@ -15,10 +15,22 @@ process spark_master {
     """
     echo "Spark master log: ${spark_master_log_file}"
 
+    if [[ -e "${spark_log_dir}/terminate-spark" ]] ; then
+        rm -f "${spark_log_dir}/terminate-spark"
+    fi
+
     /spark/bin/spark-class \
     org.apache.spark.deploy.master.Master \
     --properties-file ${spark_config_name} \
-    &> ${spark_master_log_file}
+    &> ${spark_master_log_file} &
+    spid=\$!
+    while true; do
+        if [[ -e "${spark_log_dir}/terminate-spark" ]] ; then
+            kill \$spid
+            break
+        fi
+	    sleep 5
+    done
     """
 }
 
@@ -42,7 +54,15 @@ process spark_worker {
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
     -d ${spark_log_dir} \
     --properties-file ${spark_config_name} \
-    &> ${spark_worker_log_file}
+    &> ${spark_worker_log_file} &
+    spid=\$!
+    while true; do
+        if [[ -e "${spark_log_dir}/terminate-spark" ]] ; then
+            kill \$spid
+            break
+        fi
+	    sleep 5
+    done
     """
 }
 
@@ -226,13 +246,15 @@ process spark_submit_java {
 
 process terminate_spark {
     input:
-    val(terminate)
+    val(spark_log_dir)
 
     output:
     stdout
 
-    exec:
-    println "Terminate spark"
-    if (terminate)
-        System.exit(0)
+    script:
+    """
+    cat > ${spark_log_dir}/terminate-spark <<EOF
+    DONE
+    EOF
+    """
 }

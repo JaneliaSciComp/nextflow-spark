@@ -30,7 +30,7 @@ workflow {
         spark_app_main, 
         spark_app_args]} \
     | spark_submit_java \
-    | map { true }
+    | map { spark_log_dir }
     | terminate_spark
     | view
 }
