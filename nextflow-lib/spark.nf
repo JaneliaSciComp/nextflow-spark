@@ -2,21 +2,21 @@ process spark_master {
     container = 'bde2020/spark-master:3.0.1-hadoop3.2'
 
     input:
-    path spark_log_dir
+    path spark_work_dir
 
     output:
 
     script:
-    spark_master_log_file = spark_master_log(spark_log_dir)
+    spark_master_log_file = spark_master_log(spark_work_dir)
     remove_log_file(spark_master_log_file)
-    spark_config_name = spark_config_name(spark_log_dir)
+    spark_config_name = spark_config_name(spark_work_dir)
     create_default_spark_config(spark_config_name)
 
     """
     echo "Spark master log: ${spark_master_log_file}"
 
-    if [[ -e "${spark_log_dir}/terminate-spark" ]] ; then
-        rm -f "${spark_log_dir}/terminate-spark"
+    if [[ -e "${spark_work_dir}/terminate-spark" ]] ; then
+        rm -f "${spark_work_dir}/terminate-spark"
     fi
 
     /spark/bin/spark-class \
@@ -25,7 +25,7 @@ process spark_master {
     &> ${spark_master_log_file} &
     spid=\$!
     while true; do
-        if [[ -e "${spark_log_dir}/terminate-spark" ]] ; then
+        if [[ -e "${spark_work_dir}/terminate-spark" ]] ; then
             kill \$spid
             break
         fi
@@ -38,26 +38,26 @@ process spark_worker {
     container = 'bde2020/spark-worker:3.0.1-hadoop3.2'
 
     input:
-    tuple val(worker), path(spark_log_dir)
+    tuple val(worker), path(spark_work_dir)
 
     output:
     
     script:
-    spark_master_log_file = spark_master_log(spark_log_dir)
+    spark_master_log_file = spark_master_log(spark_work_dir)
     spark_master_uri = extract_spark_uri(spark_master_log_file)
-    spark_worker_log_file = spark_worker_log(worker, spark_log_dir)
+    spark_worker_log_file = spark_worker_log(worker, spark_work_dir)
     remove_log_file(spark_worker_log_file)
-    spark_config_name = spark_config_name(spark_log_dir)
+    spark_config_name = spark_config_name(spark_work_dir)
 
     """
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
-    -d ${spark_log_dir} \
+    -d ${spark_work_dir} \
     --properties-file ${spark_config_name} \
     &> ${spark_worker_log_file} &
     spid=\$!
     while true; do
-        if [[ -e "${spark_log_dir}/terminate-spark" ]] ; then
+        if [[ -e "${spark_work_dir}/terminate-spark" ]] ; then
             kill \$spid
             break
         fi
@@ -68,15 +68,15 @@ process spark_worker {
 
 process check_spark_cluster {
     input:
-    path(spark_log_dir)
+    path(spark_work_dir)
     val(workers)
 
     output:
     val(spark_master_uri)
 
     exec:
-    spark_master_log_file = spark_master_log(spark_log_dir)
-    wait_for_all_workers(spark_log_dir, workers)
+    spark_master_log_file = spark_master_log(spark_work_dir)
+    wait_for_all_workers(spark_work_dir, workers)
     spark_master_uri = extract_spark_uri(spark_master_log_file)
 }
 
@@ -97,12 +97,12 @@ def create_default_spark_config(config_name) {
     sparkConfig.store(configFile.newWriter(), null)
 }
 
-def spark_master_log(spark_log_dir) {
-    return "${spark_log_dir}/master.log"
+def spark_master_log(spark_work_dir) {
+    return "${spark_work_dir}/master.log"
 }
 
-def spark_worker_log(worker, spark_log_dir) {
-    return "${spark_log_dir}/worker-${worker}.log"
+def spark_worker_log(worker, spark_work_dir) {
+    return "${spark_work_dir}/worker-${worker}.log"
 }
 
 def remove_log_file(log_file) {
@@ -140,14 +140,14 @@ def search_spark_uri(spark_master_log_name) {
     }
 }
 
-def wait_for_all_workers(spark_log_dir, workers) {
+def wait_for_all_workers(spark_work_dir, workers) {
     Set running_workers = []
     while (running_workers.size() == workers) {
         for (int i = 0; i < workers; i++) {
             def worker_id = i + 1
             if (running_workers.contains(worker_id))
                 continue
-            spark_worker_log_file = spark_worker_log(worker_id, spark_log_dir)
+            spark_worker_log_file = spark_worker_log(worker_id, spark_work_dir)
             if (check_worker_started(spark_worker_log_file))
                 running_workers.add(worker_id)
         }
@@ -178,25 +178,25 @@ def check_worker_started(spark_worker_log_name) {
 
 workflow spark_cluster {
     take: 
-    spark_log_dir
+    spark_work_dir
     workers
 
     main:
-    worker_channels = spark_worker_channels(spark_log_dir, workers)
-    spark_master(spark_log_dir)
+    worker_channels = spark_worker_channels(spark_work_dir, workers)
+    spark_master(spark_work_dir)
     worker_channels | spark_worker
     
-    check_spark_cluster(spark_log_dir, workers) | set {res}
+    check_spark_cluster(spark_work_dir, workers) | set {res}
 
     emit:
     res
 }
 
-def spark_worker_channels(spark_log_dir, nworkers) {
+def spark_worker_channels(spark_work_dir, nworkers) {
     def worker_channels = []
     for (int i = 0; i < nworkers; i++) {
         println("Prepare input for worker ${i+1}")
-        worker_channels.add([i+1, spark_log_dir])
+        worker_channels.add([i+1, spark_work_dir])
     }
     return Channel.fromList(worker_channels)
 }
@@ -205,7 +205,7 @@ process spark_submit_java {
     container = 'bde2020/spark-submit:3.0.1-hadoop3.2'
 
     input:
-    tuple val(spark_uri), path(spark_log_dir), path(app_jar),  val(app_main), val(app_args)
+    tuple val(spark_uri), path(spark_work_dir), path(app_jar),  val(app_main), val(app_args)
 
     output:
     stdout
@@ -246,14 +246,14 @@ process spark_submit_java {
 
 process terminate_spark {
     input:
-    val(spark_log_dir)
+    val(spark_work_dir)
 
     output:
     stdout
 
     script:
     """
-    cat > ${spark_log_dir}/terminate-spark <<EOF
+    cat > ${spark_work_dir}/terminate-spark <<EOF
     DONE
     EOF
     """

@@ -13,7 +13,7 @@ params.app_jar = 'local/app.jar'
 params.app_main = ''
 params.app_args = ''
 
-spark_log_dir=file(params.spark_log_dir)
+spark_work_dir=file(params.spark_work_dir)
 spark_workers = params.workers
 spark_app_jar = file(params.app_jar)
 spark_app_main = params.app_main
@@ -21,16 +21,16 @@ spark_app_args = params.app_args?.tokenize(',')
 
 
 workflow {
-    res = spark_cluster(spark_log_dir, spark_workers)
+    res = spark_cluster(spark_work_dir, spark_workers)
     res \
     | map {[
         it,
-        spark_log_dir,
+        spark_work_dir,
         spark_app_jar, 
         spark_app_main, 
         spark_app_args]} \
     | spark_submit_java \
-    | map { spark_log_dir }
+    | map { spark_work_dir }
     | terminate_spark
     | view
 }
