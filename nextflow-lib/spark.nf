@@ -18,6 +18,8 @@ workflow run_spark_app {
         it,
         spark_conf,
         spark_work_dir,
+        worker_cores,
+        memgb_per_core,
         spark_app, 
         spark_app_entrypoint, 
         spark_app_args]} \
@@ -159,7 +161,14 @@ process spark_submit_java {
     container = 'bde2020/spark-submit:3.0.1-hadoop3.2'
 
     input:
-    tuple val(spark_uri), val(spark_conf), path(spark_work_dir), path(app_jar),  val(app_main), val(app_args)
+    tuple val(spark_uri), 
+        val(spark_conf), 
+        path(spark_work_dir),
+        val(worker_cores),
+        val(mem_per_core_in_gb),
+        path(app),  
+        val(app_main), 
+        val(app_args)
 
     output:
     stdout
@@ -171,12 +180,13 @@ process spark_submit_java {
         submit_args_list.add("--class ${app_main}")
     }
     submit_args_list.add("--conf")
-    submit_args_list.add("spark.executor.cores=2")
-    submit_args_list.add("--executor-memory")
-    submit_args_list.add("4g")
-    submit_args_list.add("--conf")
-    submit_args_list.add("spark.default.parallelism=2")
-    submit_args_list.add(app_jar)
+    submit_args_list.add("spark.executor.cores=${worker_cores}")
+    executor_memory = calc_executor_memory(worker_cores, mem_per_core_in_gb)
+    if (executor_memory > 0) {
+        submit_args_list.add("--executor-memory")
+        submit_args_list.add("${executor_memory}g")
+    }
+    submit_args_list.add(app)
     submit_args_list.addAll(app_args)
     submit_args = submit_args_list.join(' ')
 
@@ -332,4 +342,8 @@ def spark_worker_channels(spark_conf, spark_work_dir, nworkers, worker_cores) {
         worker_channels.add([i+1, spark_conf, spark_work_dir, worker_cores])
     }
     return Channel.fromList(worker_channels)
+}
+
+def calc_executor_memory(cores, mem_per_core_in_gb) {
+    return cores * mem_per_core_in_gb
 }
