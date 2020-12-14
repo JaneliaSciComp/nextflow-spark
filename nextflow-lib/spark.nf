@@ -20,6 +20,8 @@ workflow run_spark_app {
         spark_work_dir,
         worker_cores,
         memgb_per_core,
+        driver_cores,
+        driver_memory,
         spark_app, 
         spark_app_entrypoint, 
         spark_app_args]} \
@@ -166,6 +168,8 @@ process spark_submit_java {
         path(spark_work_dir),
         val(worker_cores),
         val(mem_per_core_in_gb),
+        val(driver_cores),
+        val(driver_memory),
         path(app),  
         val(app_main), 
         val(app_args)
