@@ -1,7 +1,7 @@
 ./main.nf -profile localsingularity \
 	--runtime_opts "-B $PWD/local:$PWD/local" \
-	--workers 2 \
-	--worker_cores 2 \
+	--workers 1 \
+	--worker_cores 5 \
 	--gb_per_core 4 \
 	--driver_cores 1 \
 	--driver_memory 2g \
