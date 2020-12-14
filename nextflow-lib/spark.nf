@@ -58,6 +58,8 @@ workflow spark_cluster {
 process spark_master {
     container = 'bde2020/spark-master:3.0.1-hadoop3.2'
 
+    cpus 1
+
     input:
     tuple val(spark_conf), path(spark_work_dir)
 
@@ -101,6 +103,7 @@ process spark_master {
 
 process spark_worker {
     container = 'bde2020/spark-worker:3.0.1-hadoop3.2'
+
     cpus { ncores }
 
     input:
@@ -165,6 +168,7 @@ process wait_for_cluster {
 
 process spark_submit_java {
     container = 'bde2020/spark-submit:3.0.1-hadoop3.2'
+
     cpus { driver_cores == 0 ? 1 : driver_cores }
 
     input:
@@ -210,7 +214,7 @@ process spark_submit_java {
     """
     # if the next block cannot find a network interface the script should fail
     SPARK_LOCAL_IP=
-    for interface in /sys/class/net/{eth*,en*,em*}; do 
+    for interface in /sys/class/net/{eth*,en*,em*}; do
         [ -e \$interface ] && \
         [ `cat \$interface/operstate` == "up" ] && \
         SPARK_LOCAL_IP=\$(ifconfig `basename \$interface` | grep "inet " | awk '\$1=="inet" {print \$2; exit}' | sed s/addr://g)
