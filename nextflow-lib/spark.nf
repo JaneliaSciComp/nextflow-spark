@@ -210,7 +210,7 @@ process spark_submit_java {
     """
     # if the next block cannot find a network interface the script should fail
     SPARK_LOCAL_IP=
-    for interface in /sys/class/net/{eth*,en*}; do 
+    for interface in /sys/class/net/{eth*,en*,em*}; do 
         [ -e \$interface ] && \
         [ `cat \$interface/operstate` == "up" ] && \
         SPARK_LOCAL_IP=\$(ifconfig `basename \$interface` | grep "inet " | awk '\$1=="inet" {print \$2; exit}' | sed s/addr://g)
