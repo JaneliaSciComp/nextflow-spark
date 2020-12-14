@@ -6,7 +6,7 @@
 	--driver_cores 1 \
 	--driver_memory 2g \
 	--spark_work_dir "$PWD/local" \
-	--app_jar "$PWD/local/app.jar" \
+	--app "$PWD/local/app.jar" \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
 	--app_args \
 	"searchFromJSON, \
