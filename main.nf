@@ -3,34 +3,46 @@
 nextflow.enable.dsl=2
 
 include {
+    run_spark_app;
     spark_cluster;
-    spark_submit_java;
-    terminate_spark;
 } from './nextflow-lib/spark'
 
 params.workers = 3
-params.app_jar = 'local/app.jar'
+params.app = 'local/app.jar'
 params.app_main = ''
 params.app_args = ''
+params.spark_conf = ''
+params.worker_cores = 1
+params.gb_per_core = 15
+params.driver_cores = 1
+params.driver_memory = '1g'
 
-spark_work_dir=file(params.spark_work_dir)
-spark_workers = params.workers
-spark_app_jar = file(params.app_jar)
+// spark app parameters
+spark_app = file(params.app)
 spark_app_main = params.app_main
 spark_app_args = params.app_args?.tokenize(',')
 
+// spark config
+spark_conf = params.spark_conf
+spark_work_dir = file(params.spark_work_dir)
+spark_workers = params.workers
+spark_worker_cores = params.worker_cores
+gb_per_core = params.gb_per_core
+driver_cores = params.driver_cores
+driver_memory = params.driver_memory
 
 workflow {
-    res = spark_cluster(spark_work_dir, spark_workers)
-    res \
-    | map {[
-        it,
+    run_spark_app(
+        spark_app,
+        spark_app_main,
+        spark_app_args,
+        spark_conf,
         spark_work_dir,
-        spark_app_jar, 
-        spark_app_main, 
-        spark_app_args]} \
-    | spark_submit_java \
-    | map { spark_work_dir }
-    | terminate_spark
+        spark_workers,
+        spark_worker_cores,
+        gb_per_core,
+        driver_cores,
+        driver_memory
+    ) \
     | view
 }

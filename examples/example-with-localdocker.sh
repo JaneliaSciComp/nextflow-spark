@@ -1,8 +1,10 @@
 ./main.nf -profile localdocker \
 	--runtime_opts "-v $PWD/local:$PWD/local" \
 	--workers 1 \
+	--worker_cores 2 \
+	--gb_per_core 4 \
 	--spark_work_dir $PWD/local \
-	--app_jar $PWD/local/app.jar \
+	--app $PWD/local/app.jar \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
 	--app_args \
 	"searchLocalFiles, \
