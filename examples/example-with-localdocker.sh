@@ -3,6 +3,8 @@
 	--workers 1 \
 	--worker_cores 2 \
 	--gb_per_core 4 \
+	--driver_cores 1 \
+	--driver_memory 2g \
 	--spark_work_dir $PWD/local \
 	--app $PWD/local/app.jar \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
