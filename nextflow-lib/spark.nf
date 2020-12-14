@@ -101,9 +101,13 @@ process spark_master {
 
 process spark_worker {
     container = 'bde2020/spark-worker:3.0.1-hadoop3.2'
+    cpus { ncores }
 
     input:
-    tuple val(worker), val(spark_conf), path(spark_work_dir), val(ncores)
+    tuple val(worker),
+          val(spark_conf),
+          path(spark_work_dir),
+          val(ncores)
 
     output:
     
@@ -161,6 +165,7 @@ process wait_for_cluster {
 
 process spark_submit_java {
     container = 'bde2020/spark-submit:3.0.1-hadoop3.2'
+    cpus { driver_cores == 0 ? 1 : driver_cores }
 
     input:
     tuple val(spark_uri), 
@@ -189,6 +194,14 @@ process spark_submit_java {
     if (executor_memory > 0) {
         submit_args_list.add("--executor-memory")
         submit_args_list.add("${executor_memory}g")
+    }
+    if (driver_cores > 0) {
+        submit_args_list.add("--conf")
+        submit_args_list.add("spark.driver.cores=${driver_cores}")
+    }
+    if (driver_memory != '') {
+        submit_args_list.add("--conf")
+        submit_args_list.add("spark.driver.memory=${driver_memory}")
     }
     submit_args_list.add(app)
     submit_args_list.addAll(app_args)
