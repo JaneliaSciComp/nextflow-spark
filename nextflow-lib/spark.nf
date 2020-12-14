@@ -208,7 +208,7 @@ process spark_submit_java {
     submit_args = submit_args_list.join(' ')
 
     """
-    SPARK_LOCAL_IP=\$(ifconfig | grep "inet addr" | awk '\$1=="inet" {print \$2; exit}' | sed s/addr://g)
+    SPARK_LOCAL_IP=\$(ifconfig | grep "inet " | awk '\$1=="inet" {print \$2; exit}' | sed s/addr://g)
 
     echo "\
     --deploy-mode client \
