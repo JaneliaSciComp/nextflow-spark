@@ -1,0 +1,21 @@
+./main.nf -profile lsf \
+	--runtime_opts "-B $PWD/local:$PWD/local" \
+	--workers 10 \
+	--worker_cores 2 \
+	--gb_per_core 15 \
+	--driver_cores 1 \
+	--driver_memory 14g \
+	--spark_work_dir "$PWD/local" \
+	--app "$PWD/local/app.jar" \
+	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
+	--app_args \
+	"searchFromJSON, \
+	-m,$PWD/local/testData/mask.json, \
+	-i,$PWD/local/testData/mcfoTargets.json, \
+        --mirrorMask, \
+        --maskThreshold,100, \
+        --dataThreshold,100, \
+        --xyShift,0, \
+        --pctPositivePixels,2, \
+        --pixColorFluctuation,2, \
+        -od $PWD/local/testData/cdsresults.test"

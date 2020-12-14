@@ -1,8 +1,8 @@
 ./main.nf -profile localsingularity \
 	--runtime_opts "-B $PWD/local:$PWD/local" \
-	--workers 1 \
+	--workers 3 \
 	--worker_cores 5 \
-	--gb_per_core 4 \
+	--gb_per_core 6 \
 	--driver_cores 1 \
 	--driver_memory 2g \
 	--spark_work_dir "$PWD/local" \
