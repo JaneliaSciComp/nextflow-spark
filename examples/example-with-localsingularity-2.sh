@@ -1,6 +1,6 @@
 ./main.nf -profile localsingularity \
 	--runtime_opts "-B $PWD/local -B /nrs/jacs/jacsData/filestore" \
-	--worker 4 \
+	--workers 3 \
 	--worker_cores 4 \
 	--gb_per_core 10 \
 	--driver_cores 1 \
@@ -13,7 +13,7 @@
 	--app_args \
 	"searchFromJSON, \
 	-m $PWD/local/testData/mask-2.json, \
-	-i $PWD/local/testData/mcfoTargets.json, \
+	-i $PWD/local/testData/sgal4Targets.json, \
         --mirrorMask, \
         --maskThreshold 100, \
         --dataThreshold 100, \
