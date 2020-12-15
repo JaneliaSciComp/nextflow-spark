@@ -207,8 +207,8 @@ process spark_submit_java {
         submit_args_list.add("spark.driver.cores=${driver_cores}")
     }
     if (driver_memory != '') {
-        submit_args_list.add("--conf")
-        submit_args_list.add("spark.driver.memory=${driver_memory}")
+        submit_args_list.add("--driver-memory")
+        submit_args_list.add(driver_memory)
     }
     sparkDriverJavaOpts = []
     if (driver_logconfig != '') {
