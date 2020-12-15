@@ -12,7 +12,7 @@
 	--app_args \
 	"searchFromJSON, \
 	-m,$PWD/local/testData/mask-2.json, \
-	-i,$PWD/local/testData/mcfoTargets.json, \
+	-i,$PWD/local/testData/sgal4Targets.json, \
         --mirrorMask, \
         --maskThreshold,30, \
         --dataThreshold,30, \
