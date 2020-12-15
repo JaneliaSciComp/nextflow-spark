@@ -1,6 +1,6 @@
 ./main.nf -profile lsf \
 	--runtime_opts "-B $PWD/local -B /nrs/jacs/jacsData/filestore" \
-	--worker 3 \
+	--workers 3 \
 	--worker_cores 3 \
 	--gb_per_core 15 \
 	--driver_cores 1 \
