@@ -1,10 +1,11 @@
 ./main.nf -profile lsf \
 	--runtime_opts "-B $PWD/local:$PWD/local" \
-	--workers 10 \
+	--workers 5 \
 	--worker_cores 2 \
 	--gb_per_core 15 \
 	--driver_cores 1 \
 	--driver_memory 14g \
+        --spark_conf $PWD/examples/spark-conf \
 	--spark_work_dir "$PWD/local" \
 	--app "$PWD/local/app.jar" \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
