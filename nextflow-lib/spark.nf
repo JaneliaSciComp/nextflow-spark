@@ -304,11 +304,12 @@ def create_default_spark_config(config_name) {
     Properties sparkConfig = new Properties()
     File configFile = new File(config_name)
 
-    sparkConfig.put("spark.rpc.askTimeout", "300s");
-    sparkConfig.put("spark.storage.blockManagerHeartBeatMs", "30000");
-    sparkConfig.put("spark.rpc.retry.wait", "30s");
-    sparkConfig.put("spark.kryoserializer.buffer.max", "1024m");
-    sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
+    sparkConfig.put("spark.rpc.askTimeout", "300s")
+    sparkConfig.put("spark.storage.blockManagerHeartBeatMs", "30000")
+    sparkConfig.put("spark.rpc.retry.wait", "30s")
+    sparkConfig.put("spark.kryoserializer.buffer.max", "1024m")
+    sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s")
+    sparkConfig.put("spark.broadcast.blockSize", "0")
 
     sparkConfig.store(configFile.newWriter(), null)
 }
