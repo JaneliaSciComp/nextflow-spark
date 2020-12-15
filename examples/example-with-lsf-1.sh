@@ -1,22 +1,22 @@
 ./main.nf -profile lsf \
-	--runtime_opts "-B $PWD/local:$PWD/local" \
-	--workers 5 \
-	--worker_cores 2 \
+	--runtime_opts "-B $PWD/local -B /nrs/jacs/jacsData/filestore" \
+	--worker 3 \
+	--worker_cores 3 \
 	--gb_per_core 15 \
 	--driver_cores 1 \
-	--driver_memory 14g \
-        --spark_conf $PWD/examples/spark-conf \
+	--driver_memory 10g \
+	--driver_logconfig $PWD/examples/spark-conf/log4j.properties \
 	--spark_work_dir "$PWD/local" \
 	--app "$PWD/local/app.jar" \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
 	--app_args \
 	"searchFromJSON, \
-	-m,$PWD/local/testData/mask.json, \
-	-i,$PWD/local/testData/mcfoTargets.json, \
-        --mirrorMask, \
-        --maskThreshold,100, \
-        --dataThreshold,100, \
-        --xyShift,0, \
-        --pctPositivePixels,2, \
-        --pixColorFluctuation,2, \
-        -od $PWD/local/testData/cdsresults.test"
+	-m $PWD/local/testData/mask-2.json, \
+	-i $PWD/local/testData/mcfoTargets.json, \
+	--mirrorMask, \
+	--maskThreshold 100, \
+	--dataThreshold 100, \
+	--xyShift 2, \
+	--pctPositivePixels 2.0, \
+	--pixColorFluctuation 2, \
+	-od $PWD/local/testData/cdsresults.test"
