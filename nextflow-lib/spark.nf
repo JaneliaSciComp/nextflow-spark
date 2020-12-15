@@ -92,13 +92,11 @@ process spark_master {
     ${spark_config_env}
 
     echo "\
-    /spark/bin/spark-class \
-    org.apache.spark.deploy.master.Master \
+    /spark/bin/spark-class org.apache.spark.deploy.master.Master \
     ${spark_config_arg} \
     "
 
-    /spark/bin/spark-class \
-    org.apache.spark.deploy.master.Master \
+    /spark/bin/spark-class org.apache.spark.deploy.master.Master \
     ${spark_config_arg} \
     &> ${spark_master_log_file} &
     spid=\$!
@@ -132,7 +130,6 @@ process spark_worker {
     spark_worker_log_file = spark_worker_log(worker, spark_work_dir)
     remove_log_file(spark_worker_log_file)
     spark_config_name = spark_config_name(spark_conf, spark_work_dir)
-    terminate_file_name = terminate_file_name(spark_work_dir)
     def spark_config_env
     def spark_config_arg
     if (spark_config_name != '') {
@@ -143,7 +140,7 @@ process spark_worker {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
 
-    abs_work_dir = spark_work_dir.toFile().getAbsolutePath()
+    terminate_file_name = terminate_file_name(spark_work_dir)
 
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
@@ -151,14 +148,14 @@ process spark_worker {
     ${spark_config_env}
 
     echo "\
-    /spark/bin/spark-class \
-    org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
-    -d ${abs_work_dir} \
+    /spark/bin/spark-class org.apache.spark.deploy.worker.Worker \
+    ${spark_master_uri} \
+    -d ${spark_work_dir} \
     ${spark_config_arg} \
     "
 
-    /spark/bin/spark-class \
-    org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
+    /spark/bin/spark-class org.apache.spark.deploy.worker.Worker \
+    ${spark_master_uri} \
     -d ${spark_work_dir} \
     ${spark_config_arg} \
     &> ${spark_worker_log_file} &
@@ -251,11 +248,17 @@ process spark_submit_java {
     submit_args_list.addAll(app_args)
     submit_args = submit_args_list.join(' ')
     deploy_mode_arg = ''
+    spark_config_name = spark_config_name(spark_conf, spark_work_dir)
     if (driver_deploy_mode != '') {
         deploy_mode_arg = "--deploy-mode ${driver_deploy_mode}"
     }
-    spark_config_env = ''
-    if (spark_conf != '') {
+    def spark_config_env
+    def spark_config_arg
+    if (spark_config_name != '') {
+        spark_config_arg = "--properties-file ${spark_config_name}"
+        spark_config_env = ""
+    } else {
+        spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
 
@@ -277,13 +280,16 @@ process spark_submit_java {
     done
 
     echo "\
+    /spark/bin/spark-class org.apache.spark.deploy.SparkSubmit \
+    ${spark_config_arg} \
     ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
     --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
     ${submit_args} \
     "
 
-    /spark/bin/spark-submit \
+    /spark/bin/spark-class org.apache.spark.deploy.SparkSubmit \
+    ${spark_config_arg} \
     ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
     --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
