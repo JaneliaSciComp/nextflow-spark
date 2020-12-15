@@ -201,6 +201,8 @@ process spark_submit_java {
     submit_args_list.add("spark.executor.cores=${worker_cores}")
     parallelism = workers * worker_cores
     submit_args_list.add("--conf")
+    submit_args_list.add("spark.files.openCostInBytes=0")
+    submit_args_list.add("--conf")
     submit_args_list.add("spark.default.parallelism=${parallelism}")
     executor_memory = calc_executor_memory(worker_cores, mem_per_core_in_gb)
     if (executor_memory > 0) {
