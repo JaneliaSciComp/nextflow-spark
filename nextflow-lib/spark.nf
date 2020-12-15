@@ -181,7 +181,7 @@ process spark_submit_java {
         val(mem_per_core_in_gb),
         val(driver_cores),
         val(driver_memory),
-        val(driver_logconfig)
+        val(driver_logconfig),
         path(app),  
         val(app_main), 
         val(app_args)
@@ -210,15 +210,15 @@ process spark_submit_java {
         submit_args_list.add("--conf")
         submit_args_list.add("spark.driver.memory=${driver_memory}")
     }
-    sparkDriverJavaOpts = ''
+    sparkDriverJavaOpts = []
     if (driver_logconfig != '') {
         submit_args_list.add("--conf")
         submit_args_list.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}")
-        sparkDriverJavaOpts = "${sparkDriverJavaOpts} -Dlog4j.configuration=file://${driver_logconfig} ")
+        sparkDriverJavaOpts.add("-Dlog4j.configuration=file://${driver_logconfig} ")
     }
-    if (sparkDriverJavaOpts != '') {
+    if (sparkDriverJavaOpts.size() > 0) {
         submit_args_list.add("--driver-java-options")
-        submit_args_list.add(sparkDriverJavaOpts)
+        submit_args_list.add(sparkDriverJavaOpts.join(' '))
     }
     submit_args_list.add(app)
     submit_args_list.addAll(app_args)

@@ -31,7 +31,7 @@ spark_worker_cores = params.worker_cores
 gb_per_core = params.gb_per_core
 driver_cores = params.driver_cores
 driver_memory = params.driver_memory
-driver_logconfig = params.driver_logconfig;
+driver_logconfig = params.driver_logconfig
 
 workflow {
     run_spark_app(
