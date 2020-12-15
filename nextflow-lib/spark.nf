@@ -116,7 +116,7 @@ process spark_worker {
     container = 'bde2020/spark-worker:3.0.1-hadoop3.2'
 
     cpus { ncores }
-    clusterOptions "-J worker"
+    clusterOptions "-J worker ${params.lsf_opts}"
 
     input:
     tuple val(worker),

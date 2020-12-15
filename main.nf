@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 include {
     run_spark_app;
     spark_cluster;
-} from './nextflow-lib/spark'
+} from './nextflow-lib/spark' addParams(lsf_opts: params.lsf_opts)
 
 params.workers = 3
 params.app = 'local/app.jar'
