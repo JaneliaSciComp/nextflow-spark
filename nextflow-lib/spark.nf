@@ -120,7 +120,7 @@ process spark_worker {
     input:
     tuple val(worker),
           val(spark_conf),
-          path(spark_work_dir),
+          val(spark_work_dir),
           val(ncores)
 
     output:
@@ -142,6 +142,8 @@ process spark_worker {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
 
+    abs_work_dir = spark_work_dir.toFile().getAbsolutePath()
+
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
 
@@ -150,7 +152,7 @@ process spark_worker {
     echo "\
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
-    -d ${spark_work_dir} \
+    -d ${abs_work_dir} \
     ${spark_config_arg} \
     "
 
