@@ -203,10 +203,10 @@ process spark_submit_java {
     submit_args_list.add("--conf")
     submit_args_list.add("spark.executor.cores=${worker_cores}")
     parallelism = workers * worker_cores
-    submit_args_list.add("--conf")
-    submit_args_list.add("spark.files.openCostInBytes=0")
-    submit_args_list.add("--conf")
-    submit_args_list.add("spark.default.parallelism=${parallelism}")
+    if (parallelism > 0) {
+        submit_args_list.add("--conf")
+        submit_args_list.add("spark.default.parallelism=${parallelism}")
+    }
     executor_memory = calc_executor_memory(worker_cores, mem_per_core_in_gb)
     if (executor_memory > 0) {
         submit_args_list.add("--executor-memory")
@@ -237,10 +237,8 @@ process spark_submit_java {
     if (driver_deploy_mode != '') {
         deploy_mode_arg = "--deploy-mode ${driver_deploy_mode}"
     }
-    def spark_config_env
+    spark_config_env = ''
     if (spark_conf != '') {
-        spark_config_env = ""
-    } else {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
 
