@@ -237,7 +237,18 @@ process spark_submit_java {
     if (driver_deploy_mode != '') {
         deploy_mode_arg = "--deploy-mode ${driver_deploy_mode}"
     }
+    def spark_config_env
+    if (spark_conf != '') {
+        spark_config_env = ""
+    } else {
+        spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
+    }
+
     """
+    echo "Starting the spark driver"
+
+    ${spark_config_env}
+
     # if the next block cannot find a network interface the script should fail
     SPARK_LOCAL_IP=
     for interface in /sys/class/net/{eth*,en*,em*}; do
