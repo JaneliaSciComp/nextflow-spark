@@ -1,0 +1,23 @@
+./main.nf -profile localsingularity \
+	--runtime_opts "-B $PWD/local:$PWD/local" \
+	--workers 10 \
+	--worker_cores 1 \
+	--gb_per_core 6 \
+	--driver_cores 1 \
+	--driver_memory 10g \
+	--driver_logconfig $PWD/examples/spark-conf/log4j.properties \
+	--spark_conf $PWD/examples/spark-conf \
+	--spark_work_dir "$PWD/local" \
+	--app "$PWD/local/app.jar" \
+	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
+	--app_args \
+	"searchFromJSON, \
+	-m $PWD/local/testData/mask-2.json, \
+	-i $PWD/local/testData/sgal4Targets.json, \
+        --mirrorMask, \
+        --maskThreshold 10, \
+        --dataThreshold 10, \
+        --xyShift 2, \
+        --pctPositivePixels 2.0, \
+        --pixColorFluctuation 5, \
+        -od $PWD/local/testData/cdsresults.test"
