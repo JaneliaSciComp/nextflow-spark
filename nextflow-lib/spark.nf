@@ -11,6 +11,7 @@ workflow run_spark_app {
     driver_cores
     driver_memory
     driver_logconfig
+    driver_deploy_mode
 
     main:
     spark_uri = spark_cluster(spark_conf, spark_work_dir, nworkers, worker_cores)
@@ -25,6 +26,7 @@ workflow run_spark_app {
         driver_cores,
         driver_memory,
         driver_logconfig,
+        driver_deploy_mode,
         spark_app, 
         spark_app_entrypoint, 
         spark_app_args]} \
@@ -184,6 +186,7 @@ process spark_submit_java {
         val(driver_cores),
         val(driver_memory),
         val(driver_logconfig),
+        val(driver_deploy_mode),
         path(app),  
         val(app_main), 
         val(app_args)
@@ -230,7 +233,10 @@ process spark_submit_java {
     submit_args_list.add(app)
     submit_args_list.addAll(app_args)
     submit_args = submit_args_list.join(' ')
-
+    deploy_mode_arg = ''
+    if (driver_deploy_mode != '') {
+        deploy_mode_arg = "--deploy-mode ${driver_deploy_mode}"
+    }
     """
     # if the next block cannot find a network interface the script should fail
     SPARK_LOCAL_IP=
@@ -245,14 +251,14 @@ process spark_submit_java {
     done
 
     echo "\
-    --deploy-mode client \
+    ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
     --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
     ${submit_args} \
     "
 
     /spark/bin/spark-submit \
-    --deploy-mode client \
+    ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
     --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
     ${submit_args}
