@@ -5,7 +5,8 @@
 	--gb_per_core 6 \
 	--driver_cores 1 \
 	--driver_memory 2g \
-        --spark_conf $PWD/examples/spark-conf \
+	--driver_logconfig $PWD/examples/spark-conf/log4j.properties \
+	--spark_conf $PWD/examples/spark-conf \
 	--spark_work_dir "$PWD/local" \
 	--app "$PWD/local/app.jar" \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \

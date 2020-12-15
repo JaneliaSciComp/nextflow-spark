@@ -10,6 +10,7 @@ workflow run_spark_app {
     memgb_per_core
     driver_cores
     driver_memory
+    driver_logconfig
 
     main:
     spark_uri = spark_cluster(spark_conf, spark_work_dir, nworkers, worker_cores)
@@ -22,6 +23,7 @@ workflow run_spark_app {
         memgb_per_core,
         driver_cores,
         driver_memory,
+        driver_logconfig,
         spark_app, 
         spark_app_entrypoint, 
         spark_app_args]} \
@@ -179,6 +181,7 @@ process spark_submit_java {
         val(mem_per_core_in_gb),
         val(driver_cores),
         val(driver_memory),
+        val(driver_logconfig)
         path(app),  
         val(app_main), 
         val(app_args)
@@ -206,6 +209,16 @@ process spark_submit_java {
     if (driver_memory != '') {
         submit_args_list.add("--conf")
         submit_args_list.add("spark.driver.memory=${driver_memory}")
+    }
+    sparkDriverJavaOpts = ''
+    if (driver_logconfig != '') {
+        submit_args_list.add("--conf")
+        submit_args_list.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}")
+        sparkDriverJavaOpts = "${sparkDriverJavaOpts} -Dlog4j.configuration=file://${driver_logconfig} ")
+    }
+    if (sparkDriverJavaOpts != '') {
+        submit_args_list.add("--driver-java-options")
+        submit_args_list.add(sparkDriverJavaOpts)
     }
     submit_args_list.add(app)
     submit_args_list.addAll(app_args)
