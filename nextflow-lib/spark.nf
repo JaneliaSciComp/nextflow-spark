@@ -91,6 +91,12 @@ process spark_master {
 
     ${spark_config_env}
 
+    echo "\
+    /spark/bin/spark-class \
+    org.apache.spark.deploy.master.Master \
+    ${spark_config_arg} \
+    "
+
     /spark/bin/spark-class \
     org.apache.spark.deploy.master.Master \
     ${spark_config_arg} \
@@ -141,9 +147,15 @@ process spark_worker {
 
     ${spark_config_env}
 
+    echo "\
     /spark/bin/spark-class \
     org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
-    -c ${ncores} \
+    -d ${spark_work_dir} \
+    ${spark_config_arg} \
+    "
+
+    /spark/bin/spark-class \
+    org.apache.spark.deploy.worker.Worker ${spark_master_uri} \
     -d ${spark_work_dir} \
     ${spark_config_arg} \
     &> ${spark_worker_log_file} &
