@@ -1,5 +1,5 @@
 ./main.nf -profile localsingularity \
-	--runtime_opts "-B $PWD/local -B /nrs/jacs/jacsData/filestore" \
+	--runtime_opts "-e -B $PWD/local -B /nrs/jacs/jacsData/filestore" \
 	--workers 3 \
 	--worker_cores 4 \
 	--gb_per_core 10 \
