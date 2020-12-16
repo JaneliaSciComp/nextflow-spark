@@ -261,6 +261,7 @@ process spark_submit_java {
         spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
+    spark_driver_log_file = spark_driver_log(spark_work_dir)
 
     """
     echo "Starting the spark driver"
@@ -293,7 +294,8 @@ process spark_submit_java {
     ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
     --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
-    ${submit_args}
+    ${submit_args} \
+    &> ${spark_driver_log_file}
     """
 }
 
@@ -346,11 +348,15 @@ def create_default_spark_config(config_name) {
 }
 
 def spark_master_log(spark_work_dir) {
-    return "${spark_work_dir}/master.log"
+    return "${spark_work_dir}/sparkmaster.log"
 }
 
 def spark_worker_log(worker, spark_work_dir) {
-    return "${spark_work_dir}/worker-${worker}.log"
+    return "${spark_work_dir}/sparkworker-${worker}.log"
+}
+
+def spark_driver_log(spark_work_dir) {
+    return "${spark_work_dir}/sparkdriver.log"
 }
 
 def remove_log_file(log_file) {
