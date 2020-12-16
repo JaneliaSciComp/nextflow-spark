@@ -238,11 +238,11 @@ process spark_submit_java {
     if (driver_logconfig != '') {
         submit_args_list.add("--conf")
         submit_args_list.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}")
-        sparkDriverJavaOpts.add("-Dlog4j.configuration=file://${driver_logconfig} ")
+        sparkDriverJavaOpts.add("-Dlog4j.configuration=file://${driver_logconfig}")
     }
     if (sparkDriverJavaOpts.size() > 0) {
         submit_args_list.add("--driver-java-options")
-        submit_args_list.add(sparkDriverJavaOpts.join(' '))
+        submit_args_list.add('"' + sparkDriverJavaOpts.join(' ') + '"')
     }
     submit_args_list.add(app)
     submit_args_list.addAll(app_args)
