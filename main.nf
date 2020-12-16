@@ -18,6 +18,7 @@ params.driver_cores = 1
 params.driver_memory = '1g'
 params.driver_logconfig = ''
 params.driver_deploy_mode = ''
+params.executor_cores = params.worker_cores
 
 // spark app parameters
 spark_app = file(params.app)
@@ -29,6 +30,7 @@ spark_conf = params.spark_conf
 spark_work_dir = file(params.spark_work_dir)
 spark_workers = params.workers
 spark_worker_cores = params.worker_cores
+spark_executor_cores = params.executor_cores
 gb_per_core = params.gb_per_core
 driver_cores = params.driver_cores
 driver_memory = params.driver_memory
@@ -44,6 +46,7 @@ workflow {
         spark_work_dir,
         spark_workers,
         spark_worker_cores,
+        spark_executor_cores,
         gb_per_core,
         driver_cores,
         driver_memory,
