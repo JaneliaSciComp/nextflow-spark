@@ -85,18 +85,18 @@ process spark_master {
         spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
-
+    spark_env = create_spark_env(spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting spark master - logging to ${spark_master_log_file}"
 
-    ${spark_config_env}
+    ${spark_env}
 
     echo "\
-    /spark/bin/spark-class org.apache.spark.deploy.master.Master \
+    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
     ${spark_config_arg} \
     "
 
-    /spark/bin/spark-class org.apache.spark.deploy.master.Master \
+    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
     ${spark_config_arg} \
     &> ${spark_master_log_file} &
     spid=\$!
@@ -141,20 +141,20 @@ process spark_worker {
     }
 
     terminate_file_name = terminate_file_name(spark_work_dir)
-
+    spark_env = create_spark_env(spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
 
-    ${spark_config_env}
+    ${spark_env}
 
     echo "\
-    /spark/bin/spark-class org.apache.spark.deploy.worker.Worker \
+    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
     -d ${spark_work_dir} \
     ${spark_config_arg} \
     "
 
-    /spark/bin/spark-class org.apache.spark.deploy.worker.Worker \
+    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
     -d ${spark_work_dir} \
     ${spark_config_arg} \
@@ -262,11 +262,11 @@ process spark_submit_java {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
     spark_driver_log_file = spark_driver_log(spark_work_dir)
-
+    spark_env = create_spark_env(spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting the spark driver"
 
-    ${spark_config_env}
+    ${spark_env}
 
     # if the next block cannot find a network interface the script should fail
     SPARK_LOCAL_IP=
@@ -281,7 +281,7 @@ process spark_submit_java {
     done
 
     echo "\
-    /spark/bin/spark-class org.apache.spark.deploy.SparkSubmit \
+    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.SparkSubmit \
     ${spark_config_arg} \
     ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
@@ -289,7 +289,7 @@ process spark_submit_java {
     ${submit_args} \
     "
 
-    /spark/bin/spark-class org.apache.spark.deploy.SparkSubmit \
+    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.SparkSubmit \
     ${spark_config_arg} \
     ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
@@ -332,6 +332,18 @@ def spark_config_name(spark_conf, spark_dir) {
     } else {
         return ''
     }
+}
+
+def create_spark_env(spark_config_env, sparkLocation) {
+    return """
+    export SPARK_ENV_LOADED=
+    export SPARK_HOME=${sparkLocation}
+    export PYSPARK_PYTHONPATH_SET=
+    export PYTHONPATH="${sparkLocation}/python"
+    ${spark_config_env}
+    . "${sparkLocation}/sbin/spark-config.sh"
+    . "${sparkLocation}/bin/load-spark-env.sh"
+    """
 }
 
 def create_default_spark_config(config_name) {
