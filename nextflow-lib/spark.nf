@@ -115,7 +115,6 @@ process spark_worker {
     container = 'bde2020/spark-worker:3.0.1-hadoop3.2'
 
     cpus { ncores }
-    clusterOptions "-J worker ${params.lsf_opts}"
 
     input:
     tuple val(worker),
@@ -151,6 +150,7 @@ process spark_worker {
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
+    -c ${ncores} \
     -d ${spark_work_dir} \
     ${spark_config_arg} \
     "
