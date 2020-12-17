@@ -86,7 +86,7 @@ process spark_master {
         spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
-    spark_env = create_spark_env(spark_config_env, task.ext.sparkLocation)
+    spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting spark master - logging to ${spark_master_log_file}"
 
@@ -141,7 +141,7 @@ process spark_worker {
     }
 
     terminate_file_name = terminate_file_name(spark_work_dir)
-    spark_env = create_spark_env(spark_config_env, task.ext.sparkLocation)
+    spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
 
@@ -267,7 +267,7 @@ process spark_submit_java {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
     spark_driver_log_file = spark_driver_log(spark_work_dir)
-    spark_env = create_spark_env(spark_config_env, task.ext.sparkLocation)
+    spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting the spark driver"
 
@@ -329,12 +329,13 @@ def spark_config_name(spark_conf, spark_dir) {
     }
 }
 
-def create_spark_env(spark_config_env, sparkLocation) {
+def create_spark_env(spark_work_dir, spark_config_env, sparkLocation) {
     return """
     export SPARK_ENV_LOADED=
     export SPARK_HOME=${sparkLocation}
     export PYSPARK_PYTHONPATH_SET=
     export PYTHONPATH="${sparkLocation}/python"
+    export SPARK_LOG_DIR="${spark_work_dir}"
     ${spark_config_env}
     . "${sparkLocation}/sbin/spark-config.sh"
     . "${sparkLocation}/bin/load-spark-env.sh"
