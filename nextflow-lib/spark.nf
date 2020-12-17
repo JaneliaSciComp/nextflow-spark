@@ -91,13 +91,16 @@ process spark_master {
     echo "Starting spark master - logging to ${spark_master_log_file}"
 
     ${spark_env}
+    ${lookup_ip_script()}
 
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
+    -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
     "
 
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
+    -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
     &> ${spark_master_log_file} &
     spid=\$!
