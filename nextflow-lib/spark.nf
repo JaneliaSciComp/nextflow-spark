@@ -146,12 +146,14 @@ process spark_worker {
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
 
     ${spark_env}
+    ${lookup_ip_script()}
 
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
     -c ${ncores} \
     -d ${spark_work_dir} \
+    -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
     "
 
@@ -159,6 +161,7 @@ process spark_worker {
     ${spark_master_uri} \
     -c ${ncores} \
     -d ${spark_work_dir} \
+    -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
     &> ${spark_worker_log_file} &
     spid=\$!
@@ -270,17 +273,7 @@ process spark_submit_java {
 
     ${spark_env}
 
-    # if the next block cannot find a network interface the script should fail
-    SPARK_LOCAL_IP=
-    for interface in /sys/class/net/{eth*,en*,em*}; do
-        [ -e \$interface ] && \
-        [ `cat \$interface/operstate` == "up" ] && \
-        SPARK_LOCAL_IP=\$(ifconfig `basename \$interface` | grep "inet " | awk '\$1=="inet" {print \$2; exit}' | sed s/addr://g)
-        if [[ "\$SPARK_LOCAL_IP" != "" ]]; then
-            echo "Use Spark IP: \$SPARK_LOCAL_IP"
-            break
-        fi
-    done
+    ${lookup_ip_script()}
 
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.SparkSubmit \
@@ -377,6 +370,21 @@ def spark_driver_log(spark_work_dir) {
 def remove_log_file(log_file) {
     File f = new File(log_file)
     f.delete()
+}
+
+def lookup_ip_script() {
+    """
+    SPARK_LOCAL_IP=
+    for interface in /sys/class/net/{eth*,en*,em*}; do
+        [ -e \$interface ] && \
+        [ `cat \$interface/operstate` == "up" ] && \
+        SPARK_LOCAL_IP=\$(ifconfig `basename \$interface` | grep "inet " | awk '\$1=="inet" {print \$2; exit}' | sed s/addr://g)
+        if [[ "\$SPARK_LOCAL_IP" != "" ]]; then
+            echo "Use Spark IP: \$SPARK_LOCAL_IP"
+            break
+        fi
+    done
+    """
 }
 
 def wait_for_master(spark_master_log_name) {
