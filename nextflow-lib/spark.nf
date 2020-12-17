@@ -157,6 +157,7 @@ process spark_worker {
 
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
+    -c ${ncores} \
     -d ${spark_work_dir} \
     ${spark_config_arg} \
     &> ${spark_worker_log_file} &
