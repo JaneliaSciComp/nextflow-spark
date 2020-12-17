@@ -62,7 +62,7 @@ workflow spark_cluster {
 }
 
 process spark_master {
-    container = "bde2020/spark-master:3.0.1-hadoop3.2"
+    container = "${params.crepo}/spark:${params.spark_version}"
 
     cpus 1
 
@@ -112,7 +112,7 @@ process spark_master {
 }
 
 process spark_worker {
-    container = "bde2020/spark-worker:3.0.1-hadoop3.2"
+    container = "${params.crepo}/spark:${params.spark_version}"
 
     cpus { ncores }
 
@@ -189,7 +189,7 @@ process wait_for_cluster {
 }
 
 process spark_submit_java {
-    container = "bde2020/spark-submit:3.0.1-hadoop3.2"
+    container = "${params.crepo}/spark:${params.spark_version}"
 
     cpus { driver_cores == 0 ? 1 : driver_cores }
 

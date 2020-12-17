@@ -2,11 +2,8 @@
 
 nextflow.enable.dsl=2
 
-include {
-    run_spark_app;
-    spark_cluster;
-} from './nextflow-lib/spark' addParams(lsf_opts: params.lsf_opts)
-
+params.crepo = 'registry.int.janelia.org/janeliascicomp'
+params.spark_version = '3.0.1-hadoop3.2'
 params.workers = 3
 params.app = 'local/app.jar'
 params.app_main = ''
@@ -19,6 +16,13 @@ params.driver_memory = '1g'
 params.driver_logconfig = ''
 params.driver_deploy_mode = ''
 params.executor_cores = params.worker_cores
+
+include {
+    run_spark_app;
+    spark_cluster;
+} from './nextflow-lib/spark' addParams(lsf_opts: params.lsf_opts, 
+                                        crepo: params.crepo,
+                                        spark_version: params.spark_version)
 
 // spark app parameters
 spark_app = file(params.app)
