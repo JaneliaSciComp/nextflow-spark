@@ -351,6 +351,7 @@ def create_default_spark_config(config_name) {
     sparkConfig.put("spark.kryoserializer.buffer.max", "1024m")
     sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s")
     sparkConfig.put("spark.driver.maxResultSize", "0")
+    sparkConfig.put("spark.worker.cleanup.enabled", "true")
 
     sparkConfig.store(configFile.newWriter(), null)
 }
