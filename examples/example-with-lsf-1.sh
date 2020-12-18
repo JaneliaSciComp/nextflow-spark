@@ -1,14 +1,14 @@
 ./main.nf -profile lsf \
 	--runtime_opts "-e -B $PWD/local -B $PWD/examples -B /nrs/jacs/jacsData/filestore" \
         --lsf_opts "-P scicompsoft -q test" \
-	--workers 1 \
-	--worker_cores 15 \
-        --executor_cores 12 \
-	--gb_per_core 15 \
-	--driver_cores 1 \
-	--driver_memory 10g \
+	--workers 3 \
+        --worker_cores 4 \
+        --executor_cores 4 \
+        --gb_per_core 15 \
+        --driver_cores 1 \
+        --driver_memory 10g \
         --driver_deploy_mode client \
-	--driver_logconfig $PWD/examples/spark-conf/log4j.properties \
+	--spark_conf $PWD/examples/spark-conf \
 	--spark_work_dir "$PWD/local" \
 	--app $PWD/local/app.jar \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \

@@ -1,3 +1,3 @@
-# storage directories to use on this node for shuffle and RDD data
-export SPARK_LOCAL_DIRS="/scratch/${USER}/spark-${LSB_JOBID}-${LSB_JOBINDEX}"
-
+SPARK_WORKER_CORES=5
+SPARK_WORKER_INSTANCES=3
+SPARK_WORKER_MEMORY=75g
