@@ -104,13 +104,7 @@ process spark_master {
     ${spark_config_arg} \
     &> ${spark_master_log_file} &
     spid=\$!
-    while true; do
-        if [[ -e "${terminate_file_name}" ]] ; then
-            kill \$spid
-            break
-        fi
-	    sleep 5
-    done
+    ${wait_to_terminate('spid', terminate_file_name)}
     """
 }
 
@@ -168,13 +162,7 @@ process spark_worker {
     ${spark_config_arg} \
     &> ${spark_worker_log_file} &
     spid=\$!
-    while true; do
-        if [[ -e "${terminate_file_name}" ]] ; then
-            kill \$spid
-            break
-        fi
-	    sleep 5
-    done
+    ${wait_to_terminate('spid', terminate_file_name)}
     """
 }
 
@@ -435,6 +423,18 @@ def wait_for_all_workers(spark_work_dir, workers) {
         }
         sleep(1000)
     }
+}
+
+def wait_to_terminate(pid_var, terminate_file_name) {
+    """
+    while true; do
+        if [[ -e "${terminate_file_name}" ]] ; then
+            kill \$${pid_var}
+            break
+        fi
+	    sleep 1
+    done
+    """
 }
 
 def check_worker_started(spark_worker_log_name) {
