@@ -241,7 +241,7 @@ process spark_submit_java {
         submit_args_list.add('"' + sparkDriverJavaOpts.join(' ') + '"')
     }
     submit_args_list.add(app)
-    submit_args_list.addAll(app_args)
+    submit_args_list.add(app_args)
     submit_args = submit_args_list.join(' ')
     deploy_mode_arg = ''
     spark_config_name = spark_config_name(spark_conf, spark_work_dir)

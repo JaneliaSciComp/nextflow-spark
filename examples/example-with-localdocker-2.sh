@@ -9,13 +9,13 @@
 	--app_jar "$PWD/local/app.jar" \
 	--app_main org.janelia.colormipsearch.cmd.SparkMainEntry \
 	--app_args \
-	"searchFromJSON, \
-	-m,$PWD/local/testData/mask.json, \
-	-i,$PWD/local/testData/mcfoTargets.json, \
-        --mirrorMask, \
-        --maskThreshold,100, \
-        --dataThreshold,100, \
-        --xyShift,0, \
-        --pctPositivePixels,2, \
-        --pixColorFluctuation,2, \
+	"searchFromJSON \
+	-m $PWD/local/testData/mask.json \
+	-i $PWD/local/testData/mcfoTargets.json \
+        --mirrorMask \
+        --maskThreshold 100 \
+        --dataThreshold 100 \
+        --xyShift 0 \
+        --pctPositivePixels 2 \
+        --pixColorFluctuation 2 \
         -od $PWD/local/testData/cdsresults.test"

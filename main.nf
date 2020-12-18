@@ -27,7 +27,7 @@ include {
 // spark app parameters
 spark_app = file(params.app)
 spark_app_main = params.app_main
-spark_app_args = params.app_args?.tokenize(',')
+spark_app_args = params.app_args
 
 // spark config
 spark_conf = params.spark_conf
