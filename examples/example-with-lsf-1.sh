@@ -1,6 +1,6 @@
 ./main.nf -profile lsf \
 	--runtime_opts "-e -B $PWD/local -B $PWD/examples -B /nrs/jacs/jacsData/filestore" \
-        --lsf_opts "-P scicompsoft -q test" \
+        --lsf_opts "-P scicompsoft" \
 	--workers 3 \
         --worker_cores 4 \
         --executor_cores 4 \
