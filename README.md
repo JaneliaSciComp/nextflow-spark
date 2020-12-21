@@ -8,7 +8,12 @@ you can rebuild it:
 docker build -t registry.int.janelia.org/janeliascicomp/spark:3.0.1-hadoop3.2
 ```
 
-## Running a spark application
+## Usage
+
+You must have [Nextflow](https://www.nextflow.io) and [Singularity](https://sylabs.io) or [Docker](https://www.docker.com/) installed before running the pipeline .
+
+
+### Running a spark application
 
 To run a spark application you need to specify a working directory
 that must be accessible to the nextflow app as well as to the master and all workers.
