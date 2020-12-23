@@ -206,7 +206,7 @@ process  spark_start_app {
         val(app_log)
 
     output:
-    tuple val(spark_uri), stdout
+    val(spark_uri)
     
     script:
     // prepare submit args
