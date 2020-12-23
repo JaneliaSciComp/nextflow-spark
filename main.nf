@@ -19,10 +19,9 @@ params.executor_cores = params.worker_cores
 
 include {
     run_spark_app;
-    spark_cluster;
-} from './nextflow-lib/spark' addParams(lsf_opts: params.lsf_opts, 
-                                        crepo: params.crepo,
-                                        spark_version: params.spark_version)
+} from './lib/spark' addParams(lsf_opts: params.lsf_opts, 
+                               crepo: params.crepo,
+                               spark_version: params.spark_version)
 
 // spark app parameters
 spark_app = file(params.app)
