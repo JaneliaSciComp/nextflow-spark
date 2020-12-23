@@ -38,10 +38,16 @@ workflow run_spark_app {
     driver_deploy_mode
 
     main:
-    spark_uri = spark_cluster(spark_conf, spark_work_dir, nworkers, worker_cores)
-    spark_uri \
-    | map {[
-        it,
+    spark_uri = spark_cluster(
+        spark_conf,
+        spark_work_dir,
+        nworkers, worker_cores)
+    spark_app_res = run_spark_app_on_existing_cluster(
+        spark_uri,
+        spark_app,
+        spark_app_entrypoint,
+        spark_app_args,
+        spark_app_log,
         spark_conf,
         spark_work_dir,
         nworkers,
@@ -51,12 +57,8 @@ workflow run_spark_app {
         driver_memory,
         driver_stack_size,
         driver_logconfig,
-        driver_deploy_mode,
-        spark_app, 
-        spark_app_entrypoint, 
-        spark_app_args,
-        spark_app_log]} \
-    |  spark_start_app \
+        driver_deploy_mode)
+    spark_app_res \
     | map { spark_work_dir } \
     | terminate_spark \
     | set { done }
