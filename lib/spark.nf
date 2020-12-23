@@ -1,3 +1,24 @@
+workflow spark_cluster {
+    take:
+    spark_conf
+    spark_work_dir
+    workers
+    worker_cores
+
+    main:
+    clean_work_dir = delete_terminate_file(spark_work_dir)
+
+    worker_channels = spark_worker_channels(spark_conf, clean_work_dir, workers, worker_cores)
+
+    Channel.of([spark_conf, clean_work_dir]) | spark_master
+    worker_channels | spark_worker
+
+    wait_for_cluster(spark_work_dir, workers) | set { spark_uri }
+
+    emit:
+    spark_uri
+}
+
 workflow run_spark_app {
     take:
     spark_app
@@ -44,25 +65,45 @@ workflow run_spark_app {
     done
 }
 
-workflow spark_cluster {
+workflow run_spark_app_on_existing_cluster {
     take:
+    spark_uri
+    spark_app
+    spark_app_entrypoint
+    spark_app_args
+    spark_app_log_name
     spark_conf
     spark_work_dir
-    workers
-    worker_cores
+    nworkers
+    executor_cores
+    memgb_per_core
+    driver_cores
+    driver_memory
+    driver_logconfig
+    driver_deploy_mode
 
     main:
-    clean_work_dir = delete_terminate_file(spark_work_dir)
-
-    worker_channels = spark_worker_channels(spark_conf, clean_work_dir, workers, worker_cores)
-
-    Channel.of([spark_conf, clean_work_dir]) | spark_master
-    worker_channels | spark_worker
-
-    wait_for_cluster(spark_work_dir, workers) | set { spark_uri }
+    spark_uri \
+    | map {[
+        it,
+        spark_conf,
+        spark_work_dir,
+        nworkers,
+        executor_cores,
+        memgb_per_core,
+        driver_cores,
+        driver_memory,
+        driver_logconfig,
+        driver_deploy_mode,
+        spark_app, 
+        spark_app_entrypoint, 
+        spark_app_args,
+        spark_app_log_name]} \
+    | spark_start_app \
+    | set { done }
 
     emit:
-    spark_uri
+    done
 }
 
 process spark_master {
