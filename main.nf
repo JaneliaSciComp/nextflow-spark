@@ -29,6 +29,7 @@ spark_executor_cores = final_params.executor_cores
 gb_per_core = final_params.gb_per_core
 driver_cores = final_params.driver_cores
 driver_memory = final_params.driver_memory
+driver_stack_size = final_params.driver_stack_size
 driver_logconfig = final_params.driver_logconfig
 driver_deploy_mode = final_params.driver_deploy_mode
 
@@ -46,6 +47,7 @@ workflow {
         gb_per_core,
         driver_cores,
         driver_memory,
+        driver_stack_size,
         driver_logconfig,
         driver_deploy_mode
     ) \

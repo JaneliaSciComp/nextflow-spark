@@ -12,6 +12,7 @@ def default_spark_params() {
     params.gb_per_core = 15
     params.driver_cores = 1
     params.driver_memory = '1g'
+    params.driver_stack_size =  ''
     params.driver_logconfig = ''
     params.driver_deploy_mode = ''
     params.executor_cores = params.worker_cores

@@ -12,6 +12,7 @@ workflow run_spark_app {
     memgb_per_core
     driver_cores
     driver_memory
+    driver_stack_size
     driver_logconfig
     driver_deploy_mode
 
@@ -27,6 +28,7 @@ workflow run_spark_app {
         memgb_per_core,
         driver_cores,
         driver_memory,
+        driver_stack_size,
         driver_logconfig,
         driver_deploy_mode,
         spark_app, 
@@ -195,6 +197,7 @@ process  spark_start_app {
         val(mem_per_core_in_gb),
         val(driver_cores),
         val(driver_memory),
+        val(driver_stack_size),
         val(driver_logconfig),
         val(driver_deploy_mode),
         path(app),  
@@ -238,6 +241,9 @@ process  spark_start_app {
         submit_args_list.add("--conf")
         submit_args_list.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}")
         sparkDriverJavaOpts.add("-Dlog4j.configuration=file://${driver_logconfig}")
+    }
+    if (driver_stack_size != '') {
+        sparkDriverJavaOpts.add("-Xss${driver_stack_size}")
     }
     if (sparkDriverJavaOpts.size() > 0) {
         submit_args_list.add("--driver-java-options")
