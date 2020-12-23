@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 include {
     default_spark_params;
-} from './lib/default_spark_params'
+} from './lib/param_utils'
 
 final_params = params + default_spark_params()
 
