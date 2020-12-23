@@ -31,7 +31,7 @@ workflow run_spark_app {
         spark_app, 
         spark_app_entrypoint, 
         spark_app_args]} \
-    | spark_submit_java \
+    |  spark_start_app \
     | map { spark_work_dir } \
     | terminate_spark \
     | set { done }
@@ -179,7 +179,7 @@ process wait_for_cluster {
     wait_for_all_workers(spark_work_dir, workers)
 }
 
-process spark_submit_java {
+process  spark_start_app {
     container = "${params.crepo}/spark:${params.spark_version}"
 
     cpus { driver_cores == 0 ? 1 : driver_cores }
