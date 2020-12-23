@@ -17,4 +17,5 @@
     --xyShift 2 \
     --pctPositivePixels 2 \
     --pixColorFluctuation 1 \
-    -od $PWD/local/testData/cdsresults.test"
+    -od $PWD/local/testData/cdsresults.test" \
+	--app_log colordepthsearch.log
