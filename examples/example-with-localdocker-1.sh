@@ -13,9 +13,9 @@
 	"searchLocalFiles \
 	-m $PWD/local/testData/masks/ch2ch_2_mask.png \
 	-i $PWD/local/testData/flyem/766255970_RT_18U_FL-02_CDM.tif \
-    --mirrorMask \
-    --xyShift 2 \
-    --pctPositivePixels 2 \
-    --pixColorFluctuation 1 \
-    -od $PWD/local/testData/cdsresults.test" \
+	--mirrorMask \
+	--xyShift 2 \
+	--pctPositivePixels 2 \
+	--pixColorFluctuation 1 \
+	-od $PWD/local/testData/cdsresults.test" \
 	--app_log colordepthsearch.log
