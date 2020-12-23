@@ -3,6 +3,7 @@ workflow run_spark_app {
     spark_app
     spark_app_entrypoint
     spark_app_args
+    spark_app_log
     spark_conf
     spark_work_dir
     nworkers
@@ -30,7 +31,8 @@ workflow run_spark_app {
         driver_deploy_mode,
         spark_app, 
         spark_app_entrypoint, 
-        spark_app_args]} \
+        spark_app_args,
+        spark_app_log]} \
     |  spark_start_app \
     | map { spark_work_dir } \
     | terminate_spark \
@@ -197,7 +199,8 @@ process  spark_start_app {
         val(driver_deploy_mode),
         path(app),  
         val(app_main), 
-        val(app_args)
+        val(app_args),
+        val(app_log)
 
     output:
     stdout
@@ -257,7 +260,7 @@ process  spark_start_app {
         spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
-    spark_driver_log_file = spark_driver_log(spark_work_dir)
+    spark_driver_log_file = spark_driver_log(spark_work_dir, app_log)
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting the spark driver"
@@ -356,8 +359,9 @@ def spark_worker_log(worker, spark_work_dir) {
     return "${spark_work_dir}/sparkworker-${worker}.log"
 }
 
-def spark_driver_log(spark_work_dir) {
-    return "${spark_work_dir}/sparkdriver.log"
+def spark_driver_log(spark_work_dir, log_name) {
+    log_file_name = log_name == "" ? "sparkdriver.log" : log_name
+    return "${spark_work_dir}/${log_file_name}"
 }
 
 def remove_log_file(log_file) {

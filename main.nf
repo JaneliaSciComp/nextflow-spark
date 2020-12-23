@@ -8,6 +8,7 @@ params.workers = 3
 params.app = 'local/app.jar'
 params.app_main = ''
 params.app_args = ''
+params.app_log = ''
 params.spark_conf = ''
 params.worker_cores = 1
 params.gb_per_core = 15
@@ -27,6 +28,7 @@ include {
 spark_app = file(params.app)
 spark_app_main = params.app_main
 spark_app_args = params.app_args
+spark_app_log = params.app_log
 
 // spark config
 spark_conf = params.spark_conf
@@ -45,6 +47,7 @@ workflow {
         spark_app,
         spark_app_main,
         spark_app_args,
+        spark_app_log,
         spark_conf,
         spark_work_dir,
         spark_workers,
