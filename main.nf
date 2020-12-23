@@ -2,45 +2,35 @@
 
 nextflow.enable.dsl=2
 
-params.crepo = 'registry.int.janelia.org/janeliascicomp'
-params.spark_version = '3.0.1-hadoop3.2'
-params.workers = 3
-params.app = 'local/app.jar'
-params.app_main = ''
-params.app_args = ''
-params.app_log = ''
-params.spark_conf = ''
-params.worker_cores = 1
-params.gb_per_core = 15
-params.driver_cores = 1
-params.driver_memory = '1g'
-params.driver_logconfig = ''
-params.driver_deploy_mode = ''
-params.executor_cores = params.worker_cores
+include {
+    default_spark_params;
+} from './lib/default_spark_params'
+
+final_params = params + default_spark_params()
 
 include {
     run_spark_app;
-} from './lib/spark' addParams(lsf_opts: params.lsf_opts, 
-                               crepo: params.crepo,
-                               spark_version: params.spark_version)
+} from './lib/spark' addParams(lsf_opts: final_params.lsf_opts, 
+                               crepo: final_params.crepo,
+                               spark_version: final_params.spark_version)
 
 // spark app parameters
-spark_app = file(params.app)
-spark_app_main = params.app_main
-spark_app_args = params.app_args
-spark_app_log = params.app_log
+spark_app = file(final_params.app)
+spark_app_main = final_params.app_main
+spark_app_args = final_params.app_args
+spark_app_log = final_params.app_log
 
 // spark config
-spark_conf = params.spark_conf
-spark_work_dir = file(params.spark_work_dir)
-spark_workers = params.workers
-spark_worker_cores = params.worker_cores
-spark_executor_cores = params.executor_cores
-gb_per_core = params.gb_per_core
-driver_cores = params.driver_cores
-driver_memory = params.driver_memory
-driver_logconfig = params.driver_logconfig
-driver_deploy_mode = params.driver_deploy_mode
+spark_conf = final_params.spark_conf
+spark_work_dir = file(final_params.spark_work_dir)
+spark_workers = final_params.workers
+spark_worker_cores = final_params.worker_cores
+spark_executor_cores = final_params.executor_cores
+gb_per_core = final_params.gb_per_core
+driver_cores = final_params.driver_cores
+driver_memory = final_params.driver_memory
+driver_logconfig = final_params.driver_logconfig
+driver_deploy_mode = final_params.driver_deploy_mode
 
 workflow {
     run_spark_app(
