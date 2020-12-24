@@ -7,6 +7,7 @@ def default_spark_params() {
     params.app = 'local/app.jar'
     params.app_main = ''
     params.app_args = ''
+    params.app_log = ''
     params.spark_conf = ''
     params.worker_cores = 1
     params.gb_per_core = 15

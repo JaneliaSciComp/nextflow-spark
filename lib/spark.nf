@@ -411,7 +411,7 @@ def spark_worker_log(worker, spark_work_dir) {
 }
 
 def spark_driver_log(spark_work_dir, log_name) {
-    log_file_name = log_name == "" ? "sparkdriver.log" : log_name
+    log_file_name = log_name == null || log_name == "" ? "sparkdriver.log" : log_name
     return "${spark_work_dir}/${log_file_name}"
 }
 
