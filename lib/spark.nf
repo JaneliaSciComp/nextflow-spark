@@ -72,7 +72,7 @@ workflow run_spark_app_on_existing_cluster {
     spark_uri
     spark_app
     spark_app_entrypoint
-    spark_app_args
+    spark_app_args_param
     spark_app_log
     spark_conf
     spark_work_dir
@@ -87,22 +87,26 @@ workflow run_spark_app_on_existing_cluster {
 
     main:
     spark_uri \
-    | map {[
-        it,
-        spark_conf,
-        spark_work_dir,
-        nworkers,
-        executor_cores,
-        memgb_per_core,
-        driver_cores,
-        driver_memory,
-        driver_stack_size,
-        driver_logconfig,
-        driver_deploy_mode,
-        spark_app,
-        spark_app_entrypoint, 
-        spark_app_args,
-        spark_app_log]} \
+    | map { it ->
+        spark_app_args = spark_app_args_param instanceof Closure
+            ? spark_app_args_param.call()
+            : spark_app_args_param
+        return [
+            it,
+            spark_conf,
+            spark_work_dir,
+            nworkers,
+            executor_cores,
+            memgb_per_core,
+            driver_cores,
+            driver_memory,
+            driver_stack_size,
+            driver_logconfig,
+            driver_deploy_mode,
+            spark_app,
+            spark_app_entrypoint,
+            spark_app_args,
+            spark_app_log]} \
     | spark_start_app \
     | set { done }
 
