@@ -69,7 +69,7 @@ workflow run_spark_app {
 
 workflow run_spark_app_on_existing_cluster {
     take:
-    spark_uri
+    spark_uri_param
     spark_app
     spark_app_entrypoint
     spark_app_args_param
@@ -86,13 +86,13 @@ workflow run_spark_app_on_existing_cluster {
     driver_deploy_mode
 
     main:
-    spark_uri \
-    | map { it ->
+    spark_uri_param \
+    | map { spark_uri ->
         spark_app_args = spark_app_args_param instanceof Closure
             ? spark_app_args_param.call()
             : spark_app_args_param
         return [
-            it,
+            spark_uri,
             spark_conf,
             spark_work_dir,
             nworkers,
