@@ -7,195 +7,166 @@ include {
     terminate_file_name;
 } from './processes'
 
+/**
+ * All workflows take a channel of "named" arguments, i.e. map of arguments
+ */
+
+/**
+ * spark_cluster_inputs is a map containing the following keys:
+ * [
+ *   spark_conf:,
+ *   spark_work_dir:,
+ *   spark_workers:
+ *   spark_worker_cores:
+ * ]
+ */
 workflow spark_cluster {
     take:
     spark_cluster_inputs
 
     main:
     // prepare spark cluster params
-    spark_cluster_inputs \
+    all_spark_cluster_inputs = spark_cluster_inputs \
     | map {
-        spark_conf = it[0]
-        spark_work_dir = it[1]
-        nworkers = it[2]
-        worker_cores = it[3]
+        delete_terminate_file(it.spark_work_dir)
+        it + [workers_list: create_workers_list(it.spark_workers)]
+    }
 
-        delete_terminate_file(spark_work_dir)
-        workers_list = create_workers_list(nworkers)
-
-        [
-            spark_conf,
-            spark_work_dir,
-            worker_cores,
-            nworkers,
-            workers_list
-        ]
-    } \
-    | set { all_spark_cluster_inputs }
     // start master
     all_spark_cluster_inputs \
     | map {
         println "Prepare parameters for spark master from ${it}"
-        spark_conf = it[0]
-        spark_work_dir = it[1]
         [
-            spark_conf,
-            spark_work_dir
+            it.spark_conf,
+            it.spark_work_dir
         ]
     } \
     | spark_master
+
     // start workers
     all_spark_cluster_inputs \
+    | map {
+        println "Prepare parameters for ${it.workers_list.size()} spark workers from ${it}"
+        [
+            it.workers_list,
+            it.spark_conf,
+            it.spark_work_dir,
+            it.spark_worker_cores,
+        ]
+    }
     | transpose \
-    | map {
-        println "Prepare parameters for spark worker from ${it}"
-        spark_conf = it[0]
-        spark_work_dir = it[1]
-        worker_cores = it[2]
-        worker_id = it[4]
-        [
-            worker_id,
-            spark_conf,
-            spark_work_dir,
-            worker_cores
-        ]
-    } \
     | spark_worker
+
     // wait for cluster to start
-    all_spark_cluster_inputs \
+    spark_uri = all_spark_cluster_inputs \
     | map {
-        spark_work_dir = it[1]
-        nworkers = it[3]
         [
-            spark_work_dir,
-            nworkers
+            it.spark_work_dir,
+            it.spark_workers
         ]
     } \
-    | wait_for_cluster \
-    | set { spark_uri }
+    | wait_for_cluster
 
     emit:
     spark_uri
-
 }
 
+/**
+ * spark_app_inputs is a map containing the following keys:
+ * [
+ *   spark_uri:,
+ *   spark_app:,
+ *   spark_app_entrypoint:,
+ *   spark_app_args:,
+ *   spark_app_log:,
+ *   spark_conf:,
+ *   spark_work_dir:,
+ *   spark_worker_cores:,
+ *   spark_worker_cores:,
+ *   spark_executor_cores:,
+ *   memgb_per_core:,
+ *   driver_cores:,
+ *   driver_memory:,
+ *   driver_stack_size:,
+ *   driver_logconfig:,
+ *   driver_deploy_mode:
+ * ]
+ */
 workflow run_spark_app {
     take:
     spark_app_inputs
 
     main:
-    spark_app_inputs \
-    | map {
-        spark_conf = it[4]
-        spark_work_dir = it[5]
-        nworkers = it[6]
-        worker_cores = it[7]
-        [
-            spark_conf,
-            spark_work_dir,
-            nworkers,
-            worker_cores
-        ]
-    } \
-    | spark_cluster \
-    | set { spark_uri_var }
+    spark_uri_var = spark_app_inputs | spark_cluster
 
-    spark_uri_var \
+    done = spark_uri_var \
     | combine(spark_app_inputs) \
     | map {
-        println "Prepare spark app inputs from ${it}"
-        spark_uri = it[0]
-        spark_app = it[1]
-        spark_app_entrypoint = it[2]
-        spark_app_args = it[3]
-        spark_app_log = it[4]
-        spark_conf = it[5]
-        spark_work_dir = it[6]
-        nworkers = it[7]
-        worker_cores = it[8]
-        executor_cores = it[9]
-        memgb_per_core = it[10]
-        driver_cores = it[11]
-        driver_memory = it[12]
-        driver_stack_size = it[13]
-        driver_logconfig = it[14]
-        driver_deploy_mode = it[15]
-
-        [
-            spark_uri,
-            spark_app,
-            spark_app_entrypoint,
-            spark_app_args,
-            spark_app_log,
-            spark_conf,
-            spark_work_dir,
-            nworkers,
-            executor_cores,
-            memgb_per_core,
-            driver_cores,
-            driver_memory,
-            driver_stack_size,
-            driver_logconfig,
-            driver_deploy_mode
-        ]
+        uri_and_spark_inputs = [spark_uri: it[0]] + it[1]
+        println "Spark app inputs ${uri_and_spark_inputs}"
+        return uri_and_spark_inputs
     } \
     | run_spark_app_on_existing_cluster \
-    | map { it[1] } \
-    | terminate_spark \
-    | set { done }
+    | map {
+        // only pass the working dir to terminate_spark process
+        it[1]
+    } \
+    | terminate_spark
 
     emit:
     done
 }
 
+/**
+ * spark_app_inputs is a map containing the following keys:
+ * [
+ *   spark_uri:,
+ *   spark_app:,
+ *   spark_app_entrypoint:,
+ *   spark_app_args:,
+ *   spark_app_log:,
+ *   spark_conf:,
+ *   spark_work_dir:,
+ *   spark_executor_cores:,
+ *   memgb_per_core:,
+ *   driver_cores:,
+ *   driver_memory:,
+ *   driver_stack_size:,
+ *   driver_logconfig:,
+ *   driver_deploy_mode:
+ * ]
+ */
 workflow run_spark_app_on_existing_cluster {
     take:
     spark_app_inputs
 
     main:
-    spark_app_inputs \
+    done = spark_app_inputs \
     | map {
         println "Run spark app with inputs: ${it}"
-        spark_uri = it[0]
-        spark_app = it[1]
-        spark_app_entrypoint = it[2]
-        spark_app_args_param = it[3]
-        spark_app_log = it[4]
-        spark_conf = it[5]
-        spark_work_dir = it[6]
-        nworkers = it[7]
-        executor_cores = it[8]
-        memgb_per_core = it[9]
-        driver_cores = it[10]
-        driver_memory = it[11]
-        driver_stack_size = it[12]
-        driver_logconfig = it[13]
-        driver_deploy_mode = it[14]
-
-        spark_app_args = spark_app_args_param instanceof Closure
-            ? spark_app_args_param.call()
-            : spark_app_args_param
+        spark_app_args = it.spark_app_args instanceof Closure
+            ? it.spark_app_args.call()
+            : it.spark_app_args
 
         [
-            spark_uri,
-            spark_conf,
-            spark_work_dir,
-            nworkers,
-            executor_cores,
-            memgb_per_core,
-            driver_cores,
-            driver_memory,
-            driver_stack_size,
-            driver_logconfig,
-            driver_deploy_mode,
-            spark_app,
-            spark_app_entrypoint,
+            it.spark_uri,
+            it.spark_conf,
+            it.spark_work_dir,
+            it.spark_workers,
+            it.spark_executor_cores,
+            it.memgb_per_core,
+            it.driver_cores,
+            it.driver_memory,
+            it.driver_stack_size,
+            it.driver_logconfig,
+            it.driver_deploy_mode,
+            it.spark_app,
+            it.spark_app_entrypoint,
             spark_app_args,
-            spark_app_log
+            it.spark_app_log
         ]
     } \
-    | spark_start_app \
-    | set { done }
+    | spark_start_app
 
     emit:
     done
