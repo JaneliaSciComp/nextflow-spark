@@ -33,10 +33,6 @@ driver_stack_size = final_params.driver_stack_size
 driver_logconfig = final_params.driver_logconfig
 driver_deploy_mode = final_params.driver_deploy_mode
 
-if( !spark_work_dir.exists() ) {
-    spark_work_dir.mkdirs()
-}
-
 workflow {
     run_spark_app(
         Channel.of([

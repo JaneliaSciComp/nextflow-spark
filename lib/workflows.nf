@@ -29,6 +29,11 @@ workflow spark_cluster {
     // prepare spark cluster params
     all_spark_cluster_inputs = spark_cluster_inputs \
     | map {
+        // create the working directory
+        if( !it.spark_work_dir.exists() ) {
+            it.spark_work_dir.mkdirs()
+        }
+        // make sure no terminate file exists before we even start
         delete_terminate_file(it.spark_work_dir, it.spark_app_terminate_name)
         it + [workers_list: create_workers_list(it.spark_workers)]
     }
