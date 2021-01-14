@@ -238,7 +238,7 @@ process terminate_spark {
     tuple val(spark_work_dir), val(terminate_name)
 
     output:
-    stdout
+    val(terminate_file_name)
 
     script:
     terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)

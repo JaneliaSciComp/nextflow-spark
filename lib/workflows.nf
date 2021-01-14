@@ -119,7 +119,11 @@ workflow run_spark_app {
             it.spark_app_terminate_name
         ]
     } \
-    | terminate_spark
+    | terminate_spark \
+    | combine(spark_app_inputs) \
+    | map {
+        it[1]
+    }
 
     emit:
     done
