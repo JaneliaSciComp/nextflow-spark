@@ -49,12 +49,12 @@ workflow {
             spark_workers: spark_workers,
             spark_worker_cores: spark_worker_cores,
             spark_executor_cores: spark_executor_cores,
-            memgb_per_core: gb_per_core,
-            driver_cores: driver_cores,
-            driver_memory: driver_memory,
-            driver_stack_size: driver_stack_size,
-            driver_logconfig: driver_logconfig,
-            driver_deploy_mode: driver_deploy_mode
+            spark_gbmem_per_core: gb_per_core,
+            spark_driver_cores: driver_cores,
+            spark_driver_memory: driver_memory,
+            spark_driver_stack_size: driver_stack_size,
+            spark_driver_logconfig: driver_logconfig,
+            spark_driver_deploy_mode: driver_deploy_mode
         ])
     ) \
     | view

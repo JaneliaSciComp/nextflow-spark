@@ -84,12 +84,12 @@ workflow spark_cluster {
  *   spark_worker_cores:,
  *   spark_worker_cores:,
  *   spark_executor_cores:,
- *   memgb_per_core:,
- *   driver_cores:,
- *   driver_memory:,
- *   driver_stack_size:,
- *   driver_logconfig:,
- *   driver_deploy_mode:
+ *   spark_gbmem_per_core:,
+ *   spark_driver_cores:,
+ *   spark_driver_memory:,
+ *   spark_driver_stack_size:,
+ *   spark_driver_logconfig:,
+ *   spark_driver_deploy_mode:
  * ]
  */
 workflow run_spark_app {
@@ -128,12 +128,12 @@ workflow run_spark_app {
  *   spark_conf:,
  *   spark_work_dir:,
  *   spark_executor_cores:,
- *   memgb_per_core:,
- *   driver_cores:,
- *   driver_memory:,
- *   driver_stack_size:,
- *   driver_logconfig:,
- *   driver_deploy_mode:
+ *   spark_gbmem_per_core:,
+ *   spark_driver_cores:,
+ *   spark_driver_memory:,
+ *   spark_driver_stack_size:,
+ *   spark_driver_logconfig:,
+ *   spark_driver_deploy_mode:
  * ]
  */
 workflow run_spark_app_on_existing_cluster {
@@ -154,12 +154,12 @@ workflow run_spark_app_on_existing_cluster {
             it.spark_work_dir,
             it.spark_workers,
             it.spark_executor_cores,
-            it.memgb_per_core,
-            it.driver_cores,
-            it.driver_memory,
-            it.driver_stack_size,
-            it.driver_logconfig,
-            it.driver_deploy_mode,
+            it.spark_gbmem_per_core,
+            it.spark_driver_cores,
+            it.spark_driver_memory,
+            it.spark_driver_stack_size,
+            it.spark_driver_logconfig,
+            it.spark_driver_deploy_mode,
             it.spark_app,
             it.spark_app_entrypoint,
             spark_app_args,
