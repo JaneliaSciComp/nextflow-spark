@@ -1,5 +1,4 @@
 ./main.nf -profile lsf \
-        -with-tower 'http://nextflow.int.janelia.org/api' \
         --runtime_opts "-e -B $PWD/local -B $PWD/examples -B /nrs/jacs/jacsData/filestore" \
         --lsf_opts "-P scicompsoft -W 30" \
         --workers 3 \
