@@ -107,7 +107,7 @@ workflow run_spark_app {
     done = spark_uri_var \
     | combine(spark_app_inputs) \
     | map {
-        uri_and_spark_inputs = [spark_uri: it[0]] + it[1]
+        uri_and_spark_inputs = it[1] + [spark_uri: it[0]]
         println "Spark app inputs ${uri_and_spark_inputs}"
         return uri_and_spark_inputs
     } \
