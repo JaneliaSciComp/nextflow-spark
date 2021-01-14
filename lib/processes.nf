@@ -176,12 +176,12 @@ process  spark_start_app {
         submit_args_list.add(driver_memory)
     }
     sparkDriverJavaOpts = []
-    if (driver_logconfig != '') {
+    if (driver_logconfig != null && driver_logconfig != '') {
         submit_args_list.add("--conf")
         submit_args_list.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}")
         sparkDriverJavaOpts.add("-Dlog4j.configuration=file://${driver_logconfig}")
     }
-    if (driver_stack_size != '') {
+    if (driver_stack_size != null && driver_stack_size != '') {
         sparkDriverJavaOpts.add("-Xss${driver_stack_size}")
     }
     if (sparkDriverJavaOpts.size() > 0) {
@@ -193,7 +193,7 @@ process  spark_start_app {
     submit_args = submit_args_list.join(' ')
     deploy_mode_arg = ''
     spark_config_name = spark_config_name(spark_conf, spark_work_dir)
-    if (driver_deploy_mode != '') {
+    if (driver_deploy_mode != null && driver_deploy_mode != '') {
         deploy_mode_arg = "--deploy-mode ${driver_deploy_mode}"
     }
     def spark_config_env
