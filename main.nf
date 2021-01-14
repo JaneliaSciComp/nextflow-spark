@@ -39,21 +39,23 @@ if( !spark_work_dir.exists() ) {
 
 workflow {
     run_spark_app(
-        spark_app,
-        spark_app_main,
-        spark_app_args,
-        spark_app_log,
-        spark_conf,
-        spark_work_dir,
-        spark_workers,
-        spark_worker_cores,
-        spark_executor_cores,
-        gb_per_core,
-        driver_cores,
-        driver_memory,
-        driver_stack_size,
-        driver_logconfig,
-        driver_deploy_mode
+        Channel.of([
+            spark_app,
+            spark_app_main,
+            spark_app_args,
+            spark_app_log,
+            spark_conf,
+            spark_work_dir,
+            spark_workers,
+            spark_worker_cores,
+            spark_executor_cores,
+            gb_per_core,
+            driver_cores,
+            driver_memory,
+            driver_stack_size,
+            driver_logconfig,
+            driver_deploy_mode
+        ])
     ) \
     | view
 }
