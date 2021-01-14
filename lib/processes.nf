@@ -5,7 +5,9 @@ process spark_master {
     cpus 1
 
     input:
-    tuple val(spark_conf), path(spark_work_dir)
+    tuple val(spark_conf),
+          path(spark_work_dir),
+          val(terminate_name)
 
     output:
 
@@ -13,7 +15,7 @@ process spark_master {
     spark_master_log_file = spark_master_log(spark_work_dir)
     remove_log_file(spark_master_log_file)
     spark_config_name = spark_config_name(spark_conf, spark_work_dir)
-    terminate_file_name = terminate_file_name(spark_work_dir)
+    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
     def spark_config_env
     def spark_config_arg
     if (spark_config_name != '') {
@@ -55,13 +57,15 @@ process spark_worker {
     tuple val(worker),
           val(spark_conf),
           val(spark_work_dir),
-          val(ncores)
+          val(ncores),
+          val(terminate_name)
 
     output:
     
     script:
     spark_master_log_file = spark_master_log(spark_work_dir)
-    spark_master_uri = wait_for_master(spark_master_log_file)
+    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
+    spark_master_uri = wait_for_master(spark_master_log_file, terminate_file_name)
     spark_worker_log_file = spark_worker_log(worker, spark_work_dir)
     remove_log_file(spark_worker_log_file)
     spark_config_name = spark_config_name(spark_conf, spark_work_dir)
@@ -75,7 +79,6 @@ process spark_worker {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
 
-    terminate_file_name = terminate_file_name(spark_work_dir)
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
@@ -106,14 +109,17 @@ process spark_worker {
 
 process wait_for_cluster {
     input:
-    tuple path(spark_work_dir), val(workers)
+    tuple path(spark_work_dir),
+          val(workers),
+          val(terminate_name)
 
     output:
     val(spark_uri)
 
     exec:
-    spark_uri = wait_for_master(spark_master_log(spark_work_dir))
-    wait_for_all_workers(spark_work_dir, workers)
+    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
+    spark_uri = wait_for_master(spark_master_log(spark_work_dir), terminate_file_name)
+    wait_for_all_workers(spark_work_dir, workers, terminate_file_name)
 }
 
 process  spark_start_app {
@@ -229,13 +235,13 @@ process  spark_start_app {
 
 process terminate_spark {
     input:
-    val(spark_work_dir)
+    tuple val(spark_work_dir), val(terminate_name)
 
     output:
     stdout
 
     script:
-    terminate_file_name = terminate_file_name(spark_work_dir)
+    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
     """
     cat > ${terminate_file_name} <<EOF
     DONE
@@ -244,8 +250,10 @@ process terminate_spark {
     """
 }
 
-def terminate_file_name(working_dir) {
-    return "${working_dir}/terminate-spark"
+def terminate_file_name(working_dir, terminate_name) {
+    return terminate_name == null || terminate_name == ''
+        ? "${working_dir}/terminate-spark"
+        : "${working_dir}/${terminate_name}"
 }
 
 def spark_config_name(spark_conf, spark_dir) {
@@ -317,9 +325,12 @@ def lookup_ip_script() {
     """
 }
 
-def wait_for_master(spark_master_log_name) {
+def wait_for_master(spark_master_log_name, terminate_file_name) {
     def uri;
+    File terminate_file = new File(terminate_file_name)
     while ((uri = search_spark_uri(spark_master_log_name)) == null) {
+        if (terminate_file.exists()) break
+
         sleep(5000)
     }
     return uri
@@ -347,9 +358,12 @@ def search_spark_uri(spark_master_log_name) {
     }
 }
 
-def wait_for_all_workers(spark_work_dir, workers) {
+def wait_for_all_workers(spark_work_dir, workers, terminate_file_name) {
     Set running_workers = []
+    File terminate_file = new File(terminate_file_name)
     while (running_workers.size() == workers) {
+        if (terminate_file.exists()) break
+
         for (int i = 0; i < workers; i++) {
             def worker_id = i + 1
             if (running_workers.contains(worker_id))

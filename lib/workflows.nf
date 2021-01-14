@@ -18,6 +18,7 @@ include {
  *   spark_work_dir:,
  *   spark_workers:
  *   spark_worker_cores:
+ *   spark_app_terminate_name:
  * ]
  */
 workflow spark_cluster {
@@ -28,7 +29,7 @@ workflow spark_cluster {
     // prepare spark cluster params
     all_spark_cluster_inputs = spark_cluster_inputs \
     | map {
-        delete_terminate_file(it.spark_work_dir)
+        delete_terminate_file(it.spark_work_dir, it.spark_app_terminate_name)
         it + [workers_list: create_workers_list(it.spark_workers)]
     }
 
@@ -38,7 +39,8 @@ workflow spark_cluster {
         println "Prepare parameters for spark master from ${it}"
         [
             it.spark_conf,
-            it.spark_work_dir
+            it.spark_work_dir,
+            it.spark_app_terminate_name
         ]
     } \
     | spark_master
@@ -52,6 +54,7 @@ workflow spark_cluster {
             it.spark_conf,
             it.spark_work_dir,
             it.spark_worker_cores,
+            it.spark_app_terminate_name
         ]
     }
     | transpose \
@@ -62,7 +65,8 @@ workflow spark_cluster {
     | map {
         [
             it.spark_work_dir,
-            it.spark_workers
+            it.spark_workers,
+            it.spark_app_terminate_name
         ]
     } \
     | wait_for_cluster
@@ -79,6 +83,7 @@ workflow spark_cluster {
  *   spark_app_entrypoint:,
  *   spark_app_args:,
  *   spark_app_log:,
+ *   spark_app_terminate_name:,
  *   spark_conf:,
  *   spark_work_dir:,
  *   spark_worker_cores:,
@@ -109,7 +114,10 @@ workflow run_spark_app {
     | run_spark_app_on_existing_cluster \
     | map {
         // only pass the working dir to terminate_spark process
-        it[1]
+        [
+            it.spark_work_dir,
+            it.spark_app_terminate_name
+        ]
     } \
     | terminate_spark
 
@@ -167,13 +175,22 @@ workflow run_spark_app_on_existing_cluster {
         ]
     } \
     | spark_start_app
+    | map {
+        // extract only the URI from the result
+        it[0]
+    } \
+    | combine(spark_app_inputs) \
+    | map {
+        // forward the inputs
+        it[1]
+    }
 
     emit:
     done
 }
 
-def delete_terminate_file(working_dir) {
-    File terminate_file = new File(terminate_file_name(working_dir))
+def delete_terminate_file(working_dir, terminate_name) {
+    File terminate_file = new File(terminate_file_name(working_dir, terminate_name))
     terminate_file.delete()
     return working_dir
 }

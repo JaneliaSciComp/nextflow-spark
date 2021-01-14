@@ -44,6 +44,7 @@ workflow {
             spark_app_entrypoint: spark_app_main,
             spark_app_args: spark_app_args,
             spark_app_log: spark_app_log,
+            spark_app_terminate_name: '',
             spark_conf: spark_conf,
             spark_work_dir: spark_work_dir,
             spark_workers: spark_workers,
