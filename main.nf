@@ -15,14 +15,14 @@ include {
                                    spark_version: final_params.spark_version)
 
 // spark app parameters
-spark_app = file(final_params.app)
+spark_app = final_params.app
 spark_app_main = final_params.app_main
 spark_app_args = final_params.app_args
 spark_app_log = final_params.app_log
 
 // spark config
 spark_conf = final_params.spark_conf
-spark_work_dir = file(final_params.spark_work_dir)
+spark_work_dir = final_params.spark_work_dir
 spark_workers = final_params.workers
 spark_worker_cores = final_params.worker_cores
 spark_executor_cores = final_params.executor_cores
