@@ -31,6 +31,7 @@ workflow spark_cluster {
     | map {
         // create the working directory
         if( !it.spark_work_dir.exists() ) {
+            println "Create spark working dir: ${it.spark_work_dir}"
             it.spark_work_dir.mkdirs()
         }
         // make sure no terminate file exists before we even start
