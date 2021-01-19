@@ -109,7 +109,7 @@ process spark_worker {
 
 process wait_for_cluster {
     input:
-    tuple path(spark_work_dir),
+    tuple val(spark_work_dir),
           val(workers),
           val(terminate_name)
 
@@ -130,7 +130,7 @@ process  spark_start_app {
     input:
     tuple val(spark_uri), 
           val(spark_conf), 
-          path(spark_work_dir),
+          val(spark_work_dir),
           val(workers),
           val(executor_cores),
           val(mem_per_core_in_gb),
@@ -139,13 +139,13 @@ process  spark_start_app {
           val(driver_stack_size),
           val(driver_logconfig),
           val(driver_deploy_mode),
-          path(app),  
-          val(app_main), 
+          val(app),
+          val(app_main),
           val(app_args),
           val(app_log)
 
     output:
-    tuple val(spark_uri), path(spark_work_dir)
+    tuple val(spark_uri), val(spark_work_dir)
     
     script:
     // prepare submit args
