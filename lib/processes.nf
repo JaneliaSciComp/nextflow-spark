@@ -6,7 +6,7 @@ process spark_master {
 
     input:
     tuple val(spark_conf),
-          path(spark_work_dir),
+          val(spark_work_dir),
           val(terminate_name)
 
     output:
