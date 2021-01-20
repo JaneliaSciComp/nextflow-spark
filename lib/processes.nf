@@ -71,12 +71,18 @@ process spark_worker {
     spark_config_name = spark_config_name(spark_conf, spark_work_dir)
     def spark_config_env
     def spark_config_arg
+    spark_worker_opts='export SPARK_WORKER_OPTS="-Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=30 -Dspark.worker.cleanup.appDataTtl=1"'
     if (spark_config_name != '') {
         spark_config_arg = "--properties-file ${spark_config_name}"
-        spark_config_env = ""
+        spark_config_env = """
+        ${spark_worker_opts}
+        """
     } else {
         spark_config_arg = ""
-        spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
+        spark_config_env = """
+        ${spark_worker_opts}
+        export SPARK_CONF_DIR=${spark_conf}
+        """
     }
 
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
