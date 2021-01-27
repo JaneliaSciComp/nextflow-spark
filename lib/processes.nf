@@ -1,13 +1,14 @@
 
+
 process spark_master {
     container = "${params.crepo}/spark:${params.spark_version}"
 
     cpus 1
 
     input:
-    tuple val(spark_conf),
-          val(spark_work_dir),
-          val(terminate_name)
+    val(spark_conf)
+    val(spark_work_dir)
+    val(terminate_name)
 
     output:
 
@@ -54,11 +55,11 @@ process spark_worker {
     cpus { ncores }
 
     input:
-    tuple val(worker),
-          val(spark_conf),
-          val(spark_work_dir),
-          val(ncores),
-          val(terminate_name)
+    val(worker)
+    val(spark_conf)
+    val(spark_work_dir)
+    val(ncores)
+    val(terminate_name)
 
     output:
     
@@ -115,9 +116,9 @@ process spark_worker {
 
 process wait_for_cluster {
     input:
-    tuple val(spark_work_dir),
-          val(workers),
-          val(terminate_name)
+    val(spark_work_dir)
+    val(workers)
+    val(terminate_name)
 
     output:
     val(spark_uri)
@@ -134,24 +135,24 @@ process  spark_start_app {
     cpus { driver_cores == 0 ? 1 : driver_cores }
 
     input:
-    tuple val(spark_uri), 
-          val(spark_conf), 
-          val(spark_work_dir),
-          val(workers),
-          val(executor_cores),
-          val(mem_per_core_in_gb),
-          val(driver_cores),
-          val(driver_memory),
-          val(driver_stack_size),
-          val(driver_logconfig),
-          val(driver_deploy_mode),
-          val(app),
-          val(app_main),
-          val(app_args),
-          val(app_log)
+    val(spark_uri)
+    val(spark_conf)
+    val(spark_work_dir)
+    val(workers)
+    val(executor_cores)
+    val(mem_per_core_in_gb)
+    val(driver_cores)
+    val(driver_memory)
+    val(driver_stack_size)
+    val(driver_logconfig)
+    val(driver_deploy_mode)
+    val(app)
+    val(app_main)
+    val(app_args)
+    val(app_log)
 
     output:
-    tuple val(spark_uri), val(spark_work_dir)
+    val(spark_work_dir)
     
     script:
     // prepare submit args
@@ -241,7 +242,8 @@ process  spark_start_app {
 
 process terminate_spark {
     input:
-    tuple val(spark_work_dir), val(terminate_name)
+    val(spark_work_dir)
+    val(terminate_name)
 
     output:
     val(terminate_file_name)

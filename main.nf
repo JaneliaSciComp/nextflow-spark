@@ -35,24 +35,22 @@ driver_deploy_mode = final_params.driver_deploy_mode
 
 workflow {
     run_spark_app(
-        Channel.of([
-            spark_app: spark_app,
-            spark_app_entrypoint: spark_app_main,
-            spark_app_args: spark_app_args,
-            spark_app_log: spark_app_log,
-            spark_app_terminate_name: null,
-            spark_conf: spark_conf,
-            spark_work_dir: spark_work_dir,
-            spark_workers: spark_workers,
-            spark_worker_cores: spark_worker_cores,
-            spark_executor_cores: spark_executor_cores,
-            spark_gbmem_per_core: gb_per_core,
-            spark_driver_cores: driver_cores,
-            spark_driver_memory: driver_memory,
-            spark_driver_stack_size: driver_stack_size,
-            spark_driver_logconfig: driver_logconfig,
-            spark_driver_deploy_mode: driver_deploy_mode
-        ])
+        spark_app,
+        spark_app_main,
+        spark_app_args,
+        spark_app_log,
+        '',
+        spark_conf,
+        spark_work_dir,
+        spark_workers,
+        spark_worker_cores,
+        spark_executor_cores,
+        gb_per_core,
+        driver_cores,
+        driver_memory,
+        driver_stack_size,
+        driver_logconfig,
+        driver_deploy_mode
     ) \
     | view
 }
