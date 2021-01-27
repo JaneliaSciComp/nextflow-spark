@@ -1,4 +1,5 @@
 include {
+    prepare_spark_work_dir;
     spark_master;
     spark_worker;
     wait_for_cluster;
@@ -20,7 +21,7 @@ workflow spark_cluster {
 
     main:
     // prepare spark cluster params
-    work_dir = prepare_work_dir(spark_work_dir, spark_app_terminate_name)
+    work_dir = prepare_spark_work_dir(spark_work_dir, spark_app_terminate_name)
 
     // start master
     spark_master(
@@ -149,28 +150,6 @@ workflow run_spark_app_on_existing_cluster {
 
     emit:
     done
-}
-
-/**
- * create the work directory if it does not exist or
- * if it exists delete the terminate file if found
- */
-def prepare_work_dir(dirname, fname) {
-    dir = file(dirname)
-    if( !dir.exists() ) {
-        println "Create dir: ${dir}"
-        dir.mkdirs()
-    } else {
-        // remove the terminate file if present
-        delete_terminate_file(dir, fname)
-    }
-    return dir
-}
-
-def delete_terminate_file(working_dir, terminate_name) {
-    File terminate_file = new File(terminate_file_name(working_dir, terminate_name))
-    terminate_file.delete()
-    return working_dir
 }
 
 def create_workers_list(nworkers) {

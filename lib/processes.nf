@@ -1,4 +1,21 @@
+process prepare_spark_work_dir {
+    input:
+    val(spark_work_dir)
+    val(terminate_name)
 
+    output:
+    val(spark_work_dir)
+
+    script:
+    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
+    """
+    if [[ ! -d "${spark_work_dir}" ]] ; then
+        mkdir -p "${spark_work_dir}"
+    else
+        rm -f "${terminate_file_name}"
+    fi
+    """
+}
 
 process spark_master {
     container = "${params.crepo}/spark:${params.spark_version}"
