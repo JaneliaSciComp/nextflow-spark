@@ -8,21 +8,8 @@ include {
 } from './processes'
 
 /**
- * create the work directory if it does not exist or
- * if it exists delete the terminate file if found
+ * Start a spark cluster
  */
-def prepare_work_dir(dirname, fname) {
-    dir = file(dirname)
-    if( !dir.exists() ) {
-        println "Create dir: ${dir}"
-        dir.mkdirs()
-    } else {
-        // remove the terminate file if present
-        delete_terminate_file(dir, fname)
-    }
-    return dir
-}
-
 workflow spark_cluster {
     take:
     spark_conf
@@ -63,7 +50,7 @@ workflow spark_cluster {
 }
 
 /**
- * Start a spark cluster and run the given app
+ * Start a spark cluster then run the given app and when it's done terminate the cluster.
  */
 workflow run_spark_app {
     take:
@@ -162,6 +149,22 @@ workflow run_spark_app_on_existing_cluster {
 
     emit:
     done
+}
+
+/**
+ * create the work directory if it does not exist or
+ * if it exists delete the terminate file if found
+ */
+def prepare_work_dir(dirname, fname) {
+    dir = file(dirname)
+    if( !dir.exists() ) {
+        println "Create dir: ${dir}"
+        dir.mkdirs()
+    } else {
+        // remove the terminate file if present
+        delete_terminate_file(dir, fname)
+    }
+    return dir
 }
 
 def delete_terminate_file(working_dir, terminate_name) {
