@@ -138,7 +138,7 @@ process wait_for_cluster {
     val(terminate_name)
 
     output:
-    val(spark_uri)
+    tuple val(spark_uri), val(spark_work_dir)
 
     exec:
     terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)

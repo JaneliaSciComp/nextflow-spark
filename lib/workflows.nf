@@ -50,14 +50,14 @@ workflow spark_cluster {
     )
 
     // wait for cluster to start
-    spark_uri = wait_for_cluster(
+    spark_cluster_res = wait_for_cluster(
         work_dir,
         spark_workers,
         spark_app_terminate_name
     )
 
     emit:
-    spark_uri
+    spark_cluster_res
 }
 
 /**
@@ -84,7 +84,7 @@ workflow run_spark_app {
 
     main:
     // start the cluster
-    spark_uri = spark_cluster(
+    spark_cluster_res = spark_cluster(
         spark_conf,
         spark_work_dir,
         spark_workers,
@@ -92,6 +92,7 @@ workflow run_spark_app {
         spark_app_terminate_name
     )
     // run the app on the cluster
+    spark_uri = spark_cluster_res | map { it[0] }
     spark_app_dir = run_spark_app_on_existing_cluster(
         spark_uri,
         spark_app,
