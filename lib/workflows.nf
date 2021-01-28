@@ -21,7 +21,6 @@ workflow spark_cluster {
 
     main:
     // prepare spark cluster params
-    workers_list = create_workers_list(spark_workers)
     work_dir = prepare_spark_work_dir(spark_work_dir, spark_app_terminate_name)
 
     // start master
@@ -34,21 +33,14 @@ workflow spark_cluster {
     // cross product all workers with all work dirs and 
     // then push them to different channels
     // so that we can start all needed spark workers with the proper worker directory
+    workers_list = create_workers_list(spark_workers)
     workers_with_work_dirs = work_dir.combine(workers_list)
-        .multiMap {
-            all_worker_dirs: it[0]
-            all_workers: it[1]
-        }
-
-    // display workers and worker dirs
-    workers_with_work_dirs.all_workers |  view
-    workers_with_work_dirs.all_worker_dirs | view
 
     // start workers
     spark_worker(
-        workers_with_work_dirs.all_workers,
+        workers_with_work_dirs.map { it[1] },
         spark_conf,
-        workers_with_work_dirs.all_worker_dirs,
+        workers_with_work_dirs.map { it[0] },
         spark_worker_cores,
         spark_app_terminate_name
     )
