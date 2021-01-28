@@ -1,7 +1,7 @@
 ./main.nf -profile localdocker \
 	--runtime_opts "-v $PWD/local:$PWD/local" \
-	--workers 1 \
-	--worker_cores 2 \
+	--workers 2 \
+	--worker_cores 1 \
 	--gb_per_core 4 \
 	--driver_cores 1 \
 	--driver_memory 2g \
