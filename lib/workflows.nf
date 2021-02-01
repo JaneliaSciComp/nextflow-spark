@@ -34,13 +34,14 @@ workflow spark_cluster {
     // then push them to different channels
     // so that we can start all needed spark workers with the proper worker directory
     def workers_list = create_workers_list(spark_workers)
+    // cross product all worker directories with all worker numbers
     def workers_with_work_dirs = work_dir.combine(workers_list)
 
     // start workers
     spark_worker(
-        workers_with_work_dirs.map { it[1] },
+        workers_with_work_dirs.map { it[1] }, // worker number
         spark_conf,
-        workers_with_work_dirs.map { it[0] },
+        workers_with_work_dirs.map { it[0] }, // worker dir
         spark_worker_cores,
         spark_app_terminate_name
     )
@@ -109,8 +110,8 @@ workflow run_spark_app {
     )
     // stop the cluster
     done = terminate_spark(
-            spark_app_res.map { it[1] },
-            spark_app_terminate_name
+        spark_app_res.map { it[1] }, // select the working  dir from the result
+        spark_app_terminate_name
     )
 
     emit:
