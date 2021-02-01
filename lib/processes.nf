@@ -169,7 +169,7 @@ process  spark_start_app {
     val(app_log)
 
     output:
-    val(spark_work_dir)
+    tuple val(spark_uri), val(spark_work_dir)
     
     script:
     // prepare submit args
@@ -263,7 +263,7 @@ process terminate_spark {
     val(terminate_name)
 
     output:
-    val(terminate_file_name)
+    tuple val(terminate_file_name), val(spark_work_dir)
 
     script:
     terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
@@ -326,7 +326,7 @@ def spark_worker_log(worker, spark_work_dir) {
 }
 
 def spark_driver_log(spark_work_dir, log_name) {
-    log_file_name = log_name == null || log_name == "" ? "sparkdriver.log" : log_name
+    def log_file_name = log_name == null || log_name == "" ? "sparkdriver.log" : log_name
     return "${spark_work_dir}/${log_file_name}"
 }
 

@@ -89,7 +89,7 @@ workflow run_spark_app {
     )
     // run the app on the cluster
     def spark_uri = spark_cluster_res | map { it[0] }
-    def spark_app_dir = run_spark_app_on_existing_cluster(
+    def spark_app_res = run_spark_app_on_existing_cluster(
         spark_uri,
         spark_app,
         spark_app_entrypoint,
@@ -108,7 +108,10 @@ workflow run_spark_app {
         spark_driver_deploy_mode
     )
     // stop the cluster
-    done = terminate_spark(spark_app_dir, spark_app_terminate_name)
+    done = terminate_spark(
+            spark_app_res.map { it[1] },
+            spark_app_terminate_name
+    )
 
     emit:
     done
