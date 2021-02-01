@@ -21,7 +21,7 @@ workflow spark_cluster {
 
     main:
     // prepare spark cluster params
-    work_dir = prepare_spark_work_dir(spark_work_dir, spark_app_terminate_name)
+    def work_dir = prepare_spark_work_dir(spark_work_dir, spark_app_terminate_name)
 
     // start master
     spark_master(
@@ -33,8 +33,8 @@ workflow spark_cluster {
     // cross product all workers with all work dirs and 
     // then push them to different channels
     // so that we can start all needed spark workers with the proper worker directory
-    workers_list = create_workers_list(spark_workers)
-    workers_with_work_dirs = work_dir.combine(workers_list)
+    def workers_list = create_workers_list(spark_workers)
+    def workers_with_work_dirs = work_dir.combine(workers_list)
 
     // start workers
     spark_worker(
@@ -80,7 +80,7 @@ workflow run_spark_app {
 
     main:
     // start the cluster
-    spark_cluster_res = spark_cluster(
+    def spark_cluster_res = spark_cluster(
         spark_conf,
         spark_work_dir,
         spark_workers,
@@ -88,8 +88,8 @@ workflow run_spark_app {
         spark_app_terminate_name
     )
     // run the app on the cluster
-    spark_uri = spark_cluster_res | map { it[0] }
-    spark_app_dir = run_spark_app_on_existing_cluster(
+    def spark_uri = spark_cluster_res | map { it[0] }
+    def spark_app_dir = run_spark_app_on_existing_cluster(
         spark_uri,
         spark_app,
         spark_app_entrypoint,
