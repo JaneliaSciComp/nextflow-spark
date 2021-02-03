@@ -47,14 +47,14 @@ workflow spark_cluster {
     )
 
     // wait for cluster to start
-    spark_cluster_res = wait_for_cluster(
+    def spark_cluster_res = wait_for_cluster(
         work_dir,
         spark_workers,
         spark_app_terminate_name
     )
 
     emit:
-    spark_cluster_res
+    done = spark_cluster_res
 }
 
 /**
