@@ -19,6 +19,7 @@ process prepare_spark_work_dir {
 
 process spark_master {
     container = "${params.crepo}/spark:${params.spark_version}"
+    def lookup_ip_script = create_lookup_ip_script()
 
     cpus 1
 
@@ -45,11 +46,12 @@ process spark_master {
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+
     """
     echo "Starting spark master - logging to ${spark_master_log_file}"
 
     ${spark_env}
-    ${lookup_ip_script()}
+    ${lookup_ip_script}
 
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
@@ -77,9 +79,8 @@ process spark_worker {
     val(spark_work_dir)
     val(ncores)
     val(terminate_name)
-
-    output:
     
+    def lookup_ip_script = create_lookup_ip_script()
     script:
     spark_master_log_file = spark_master_log(spark_work_dir)
     terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
@@ -104,11 +105,12 @@ process spark_worker {
     }
 
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
 
     ${spark_env}
-    ${lookup_ip_script()}
+    ${lookup_ip_script}
 
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
@@ -150,6 +152,7 @@ process wait_for_cluster {
 
 process  spark_start_app {
     container = "${params.crepo}/spark:${params.spark_version}"
+    def lookup_ip_script = create_lookup_ip_script()
 
     cpus { driver_cores == 0 ? 1 : driver_cores }
 
@@ -233,12 +236,13 @@ process  spark_start_app {
     }
     spark_driver_log_file = spark_driver_log(spark_work_dir, app_log)
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+
     """
     echo "Starting the spark driver"
 
     ${spark_env}
 
-    ${lookup_ip_script()}
+    ${lookup_ip_script}
 
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.SparkSubmit \
@@ -337,7 +341,23 @@ def remove_log_file(log_file) {
     f.delete()
 }
 
-def lookup_ip_script() {
+def create_lookup_ip_script() {
+    if (workflow.containerEngine=="docker") {
+        return lookup_ip_inside_docker_script()
+    }
+    else {
+        return lookup_local_ip_script()
+    }
+}
+
+def lookup_local_ip_script() {
+    """
+    SPARK_LOCAL_IP=`hostname -i`
+    echo "Use Spark IP: \$SPARK_LOCAL_IP"
+    """
+}
+
+def lookup_ip_inside_docker_script() {
     """
     SPARK_LOCAL_IP=
     for interface in /sys/class/net/{eth*,en*,em*}; do
