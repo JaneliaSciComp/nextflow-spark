@@ -132,6 +132,8 @@ process spark_worker {
 }
 
 process wait_for_cluster {
+    executor 'local'
+    
     input:
     val(spark_work_dir)
     val(workers)
