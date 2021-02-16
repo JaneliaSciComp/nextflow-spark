@@ -406,11 +406,19 @@ def wait_for_all_workers(spark_work_dir, workers, terminate_file_name) {
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
     while true; do
+
+        if ! kill -0 \$${pid_var} >/dev/null 2>&1; then
+            echo "Process \$${pid_var} died"
+            exit 1
+        fi
+
         if [[ -e "${terminate_file_name}" ]] ; then
             kill \$${pid_var}
             break
         fi
+
 	    sleep 1
+        
     done
     """
 }
