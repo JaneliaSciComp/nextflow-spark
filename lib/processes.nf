@@ -22,6 +22,7 @@ process spark_master {
     def lookup_ip_script = create_lookup_ip_script()
 
     cpus 1
+    memory '1 GB'
 
     input:
     val(spark_conf)
@@ -71,13 +72,15 @@ process spark_master {
 process spark_worker {
     container = "${params.crepo}/spark:${params.spark_version}"
 
-    cpus { ncores }
+    cpus { worker_cores }
+    memory "${worker_mem_in_gb} GB"
 
     input:
     val(worker)
     val(spark_conf)
     val(spark_work_dir)
-    val(ncores)
+    val(worker_cores)
+    val(worker_mem_in_gb)
     val(terminate_name)
     
     def lookup_ip_script = create_lookup_ip_script()
@@ -105,7 +108,6 @@ process spark_worker {
     }
 
     spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
-
     """
     echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
 
@@ -115,7 +117,8 @@ process spark_worker {
     echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
-    -c ${ncores} \
+    -c ${worker_cores} \
+    -m ${worker_mem_in_gb}G \
     -d ${spark_work_dir} \
     -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
@@ -123,7 +126,8 @@ process spark_worker {
 
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.worker.Worker \
     ${spark_master_uri} \
-    -c ${ncores} \
+    -c ${worker_cores} \
+    -m ${worker_mem_in_gb}G \
     -d ${spark_work_dir} \
     -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
@@ -150,11 +154,12 @@ process wait_for_cluster {
     wait_for_all_workers(spark_work_dir, workers, terminate_file_name)
 }
 
-process  spark_start_app {
+process spark_start_app {
     container = "${params.crepo}/spark:${params.spark_version}"
     def lookup_ip_script = create_lookup_ip_script()
 
     cpus { driver_cores == 0 ? 1 : driver_cores }
+    memory { driver_memory.replace('k'," KB").replace('m'," MB").replace('g'," GB").replace('t'," TB") }
 
     input:
     val(spark_uri)

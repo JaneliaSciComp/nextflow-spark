@@ -17,6 +17,7 @@ workflow spark_cluster {
     spark_work_dir
     spark_workers
     spark_worker_cores
+    worker_mem_in_gb
     spark_app_terminate_name
 
     main:
@@ -43,6 +44,7 @@ workflow spark_cluster {
         spark_conf,
         workers_with_work_dirs.map { it[0] }, // worker dir
         spark_worker_cores,
+        worker_mem_in_gb,
         spark_app_terminate_name
     )
 
