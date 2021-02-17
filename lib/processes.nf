@@ -342,10 +342,9 @@ def remove_log_file(log_file) {
 }
 
 def create_lookup_ip_script() {
-    if (workflow.containerEngine=="docker") {
+    if (workflow.containerEngine == "docker") {
         return lookup_ip_inside_docker_script()
-    }
-    else {
+    } else {
         return lookup_local_ip_script()
     }
 }
@@ -438,7 +437,7 @@ def wait_to_terminate(pid_var, terminate_file_name) {
         fi
 
 	    sleep 1
-        
+
     done
     """
 }
