@@ -337,8 +337,14 @@ def spark_driver_log(spark_work_dir, log_name) {
 }
 
 def remove_log_file(log_file) {
-    File f = new File(log_file)
-    f.delete()
+    try {
+        File f = new File(log_file)
+        f.delete()
+    }
+    catch (Throwable t) {
+        log.error "Problem deleting log file ${log_file}"
+        t.printStackTrace()
+    }
 }
 
 def create_lookup_ip_script() {
