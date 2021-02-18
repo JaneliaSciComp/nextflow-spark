@@ -73,7 +73,8 @@ process spark_worker {
     container = "${params.crepo}/spark:${params.spark_version}"
 
     cpus { worker_cores }
-    memory "${worker_mem_in_gb} GB"
+    // 1 GB of overhead for the worker itself, the rest for its executors
+    memory "${worker_mem_in_gb+1} GB"
 
     input:
     val(worker)
