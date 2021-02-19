@@ -11,8 +11,9 @@ final_params = params + default_spark_params()
 include {
     run_spark_app;
 } from './lib/workflows' addParams(lsf_opts: final_params.lsf_opts, 
-                                   crepo: final_params.crepo,
-                                   spark_version: final_params.spark_version)
+                                   spark_container_repo: final_params.spark_container_repo,
+                                   spark_container_name: final_params.spark_container_name,
+                                   spark_container_version: final_params.spark_container_version)
 
 // spark app parameters
 spark_app = final_params.app

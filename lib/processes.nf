@@ -18,7 +18,7 @@ process prepare_spark_work_dir {
 }
 
 process spark_master {
-    container = "${params.crepo}/spark:${params.spark_version}"
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
     def lookup_ip_script = create_lookup_ip_script()
 
     cpus 1
@@ -70,7 +70,7 @@ process spark_master {
 }
 
 process spark_worker {
-    container = "${params.crepo}/spark:${params.spark_version}"
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
 
     cpus { worker_cores }
     // 1 GB of overhead for the worker itself, the rest for its executors
@@ -156,7 +156,7 @@ process wait_for_cluster {
 }
 
 process spark_start_app {
-    container = "${params.crepo}/spark:${params.spark_version}"
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
     def lookup_ip_script = create_lookup_ip_script()
 
     cpus { driver_cores == 0 ? 1 : driver_cores }

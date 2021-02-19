@@ -166,6 +166,6 @@ workflow run_spark_app_on_existing_cluster {
 }
 
 def create_workers_list(nworkers) {
-    println "Prepare $nworkers workers"
+    log.debug "Prepare $nworkers workers"
     return 1..nworkers
 }

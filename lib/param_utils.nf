@@ -1,8 +1,9 @@
 def default_spark_params() {
     params = [:]
 
-    params.crepo = 'registry.int.janelia.org/janeliascicomp'
-    params.spark_version = '3.0.1-hadoop3.2'
+    params.spark_container_repo = 'registry.int.janelia.org/janeliascicomp'
+    params.spark_container_name = 'spark'
+    params.spark_container_version = '3.0.1-hadoop3.2'
     params.workers = 3
     params.app = 'local/app.jar'
     params.app_main = ''
