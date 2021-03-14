@@ -362,8 +362,11 @@ def create_lookup_ip_script() {
 }
 
 def lookup_local_ip_script() {
+    // Take the last IP that's listed by hostname -i.
+    // This hack works on Janelia Cluster and AWS EC2.
+    // It won't be necessary at all once we add a local option for Spark apps.
     """
-    SPARK_LOCAL_IP=`hostname -i`
+    SPARK_LOCAL_IP=`hostname -i | rev | cut -d' ' -f1 | rev`
     echo "Use Spark IP: \$SPARK_LOCAL_IP"
     """
 }
