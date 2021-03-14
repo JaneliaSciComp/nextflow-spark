@@ -39,7 +39,7 @@ process spark_master {
     def spark_config_env
     def spark_config_arg
     if (spark_config_name != '') {
-        create_default_spark_config(spark_config_name)
+        create_default_spark_config(params.spark_local_dir, spark_config_name)
         spark_config_arg = "--properties-file ${spark_config_name}"
         spark_config_env = ""
     } else {
@@ -314,7 +314,7 @@ def create_spark_env(spark_work_dir, spark_config_env, sparkLocation) {
     """
 }
 
-def create_default_spark_config(config_name) {
+def create_default_spark_config(spark_local_dir, config_name) {
     Properties sparkConfig = new Properties()
     File configFile = new File(config_name)
 
@@ -325,6 +325,7 @@ def create_default_spark_config(config_name) {
     sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s")
     sparkConfig.put("spark.driver.maxResultSize", "0")
     sparkConfig.put("spark.worker.cleanup.enabled", "true")
+    sparkConfig.put("spark.local.dir", spark_local_dir)
 
     sparkConfig.store(configFile.newWriter(), null)
 }
