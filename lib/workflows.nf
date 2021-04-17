@@ -11,6 +11,38 @@ include {
 /**
  * Start a spark cluster
  */
+workflow spark_cluster_start {
+    take:
+    spark_conf
+    spark_work_dir
+    spark_workers
+    spark_worker_cores
+    spark_gbmem_per_core
+    spark_app_terminate_name
+
+    main:
+    
+    res = spark_cluster(spark_conf, 
+        spark_work_dir,
+        spark_workers,
+        spark_worker_cores,
+        spark_worker_cores * spark_gbmem_per_core,
+        spark_app_terminate_name)
+
+    log.debug "Spark cluster started:"
+    log.debug "  Working directory: ${spark_work_dir}"
+    log.debug "  Number of workers: ${spark_workers}"
+    log.debug "  Cores per worker: ${spark_worker_cores}"
+    log.debug "  GB per worker core: ${spark_gbmem_per_core}"
+
+    emit:
+    res
+}
+
+/** 
+ * Start a spark cluster
+ * Deprecated: use spark_cluster_start 
+ */
 workflow spark_cluster {
     take:
     spark_conf
@@ -163,6 +195,21 @@ workflow run_spark_app_on_existing_cluster {
     )
 
     emit:
+    done
+}
+
+workflow spark_cluster_stop {
+    take:
+    spark_work_dir
+    spark_app_terminate_name
+
+    main:
+    done = terminate_spark(
+        spark_work_dir,
+        spark_app_terminate_name
+    )
+
+    emit: 
     done
 }
 

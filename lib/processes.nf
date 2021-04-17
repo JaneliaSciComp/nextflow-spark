@@ -8,7 +8,7 @@ process prepare_spark_work_dir {
 
     script:
     terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
-    log.info("Spark work directory: ${spark_work_dir}")
+    log.debug "Spark work directory: ${spark_work_dir}"
     """
     if [[ ! -d "${spark_work_dir}" ]] ; then
         mkdir -p "${spark_work_dir}"
