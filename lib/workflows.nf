@@ -88,6 +88,7 @@ workflow run_spark_app {
         spark_work_dir,
         spark_workers,
         spark_worker_cores,
+        spark_worker_cores * spark_gbmem_per_core,
         spark_app_terminate_name
     )
     // run the app on the cluster
