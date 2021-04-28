@@ -1,4 +1,6 @@
 process prepare_spark_work_dir {
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+
     input:
     val(spark_work_dir)
     val(terminate_name)
@@ -140,7 +142,7 @@ process spark_worker {
 }
 
 process wait_for_cluster {
-    executor 'local'
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
 
     input:
     val(spark_work_dir)
@@ -150,10 +152,12 @@ process wait_for_cluster {
     output:
     tuple val(spark_uri), val(spark_work_dir)
 
-    exec:
+    script:
     terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
     spark_uri = wait_for_master(spark_master_log(spark_work_dir), terminate_file_name)
     wait_for_all_workers(spark_work_dir, workers, terminate_file_name)
+    """
+    """
 }
 
 process spark_start_app {
@@ -271,6 +275,8 @@ process spark_start_app {
 }
 
 process terminate_spark {
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+
     input:
     val(spark_work_dir)
     val(terminate_name)
