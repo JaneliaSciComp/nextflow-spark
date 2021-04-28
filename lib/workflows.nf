@@ -2,10 +2,11 @@ include {
     prepare_spark_work_dir;
     spark_master;
     spark_worker;
-    wait_for_cluster;
     spark_start_app;
     terminate_spark;
-    terminate_file_name;
+    wait_for_master;
+    wait_for_path;
+    wait_for_worker;
 } from './processes'
 
 /**
@@ -55,6 +56,7 @@ workflow spark_cluster {
     main:
     // prepare spark cluster params
     def work_dir = prepare_spark_work_dir(spark_work_dir, spark_app_terminate_name)
+    | wait_for_path
 
     // start master
     spark_master(
@@ -63,29 +65,37 @@ workflow spark_cluster {
         spark_app_terminate_name
     )
 
+    def spark_master_res = wait_for_master(work_dir, spark_app_terminate_name)
+
     // cross product all workers with all work dirs and 
     // then push them to different channels
     // so that we can start all needed spark workers with the proper worker directory
     def workers_list = create_workers_list(spark_workers)
     // cross product all worker directories with all worker numbers
-    def workers_with_work_dirs = work_dir.combine(workers_list)
+    def workers_with_work_dirs = spark_master_res[0].combine(workers_list)
 
     // start workers
     spark_worker(
-        workers_with_work_dirs.map { it[1] }, // worker number
+        workers_with_work_dirs.map { it[2] }, // spark uri
+        workers_with_work_dirs.map { it[3] }, // worker number
         spark_conf,
-        workers_with_work_dirs.map { it[0] }, // worker dir
+        workers_with_work_dirs.map { it[0] }, // spark work dir
         spark_worker_cores,
         worker_mem_in_gb,
-        spark_app_terminate_name
+        workers_with_work_dirs.map { it[1] }, // spark app terminate name
     )
 
     // wait for cluster to start
-    def spark_cluster_res = wait_for_cluster(
-        work_dir,
-        spark_workers,
-        spark_app_terminate_name
+    def spark_cluster_res = wait_for_worker(
+        workers_with_work_dirs.map { it[2] }, // spark uri
+        workers_with_work_dirs.map { it[0] }, // spark work dir
+        workers_with_work_dirs.map { it[1] }, // spark app terminate name
+        workers_with_work_dirs.map { it[3] } // worker number
     )
+    | groupTuple(by: [0,1,2]) // wait for all workers to start
+    | map {
+        it[0..1]
+    } // [ spark_uri, spark_work_dir ]
 
     emit:
     done = spark_cluster_res
@@ -123,8 +133,13 @@ workflow run_spark_app {
         spark_worker_cores * spark_gbmem_per_core,
         spark_app_terminate_name
     )
+
     // run the app on the cluster
-    def spark_uri = spark_cluster_res | map { it[0] }
+    def spark_uri = spark_cluster_res 
+    | map {
+        log.debug "Created spark cluster: $it"
+        it[0] 
+    }
     def spark_app_res = run_spark_app_on_existing_cluster(
         spark_uri,
         spark_app,

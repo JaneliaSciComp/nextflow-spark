@@ -9,7 +9,7 @@ process prepare_spark_work_dir {
     val(spark_work_dir)
 
     script:
-    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
+    def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     log.debug "Spark work directory: ${spark_work_dir}"
     """
     if [[ ! -d "${spark_work_dir}" ]] ; then
@@ -17,13 +17,41 @@ process prepare_spark_work_dir {
     else
         rm -f "${terminate_file_name}"
     fi
+    echo "Write test" > "${spark_work_dir}/.writetest"
+    """
+}
+
+process wait_for_path {
+    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+
+    input:
+    val(f)
+
+    output:
+    val(f)
+
+    script:
+    """
+    SLEEP_SECS="\${SLEEP_SECS:-1}"
+    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-30}"
+
+    echo "Checking for $f"
+    SECONDS=0
+
+    while ! test -e "$f"; do
+        sleep \${SLEEP_SECS}
+        if (( \${SECONDS} < \${MAX_WAIT_SECS} )); then
+            echo "Waiting for $f"
+        else
+            echo "Timed out after \${SECONDS} seconds while waiting for $f"
+            exit 1
+        fi
+    done
     """
 }
 
 process spark_master {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
-    def lookup_ip_script = create_lookup_ip_script()
-
     cpus 1
     memory '1 GB'
 
@@ -35,25 +63,28 @@ process spark_master {
     output:
 
     script:
-    spark_master_log_file = spark_master_log(spark_work_dir)
-    remove_log_file(spark_master_log_file)
-    spark_config_name = spark_config_name(spark_conf, spark_work_dir)
-    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
+    def spark_master_log_file = get_spark_master_log(spark_work_dir)
+    def spark_config_name = get_spark_config_name(spark_conf, spark_work_dir)
+    def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    def create_spark_config
     def spark_config_env
     def spark_config_arg
     if (spark_config_name != '') {
-        create_default_spark_config(params.spark_local_dir, spark_config_name)
+        create_spark_config = create_default_spark_config(spark_config_name)
         spark_config_arg = "--properties-file ${spark_config_name}"
         spark_config_env = ""
     } else {
+        create_spark_config = ""
         spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
-    spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
-
+    def spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+    def lookup_ip_script = create_lookup_ip_script()
     """
     echo "Starting spark master - logging to ${spark_master_log_file}"
+    rm -f ${spark_master_log_file}
 
+    ${create_spark_config}
     ${spark_env}
     ${lookup_ip_script}
 
@@ -72,6 +103,42 @@ process spark_master {
     """
 }
 
+process wait_for_master {
+    container { "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}" }
+
+    input:
+    val(spark_work_dir)
+    val(terminate_name)
+
+    output:
+    tuple val(spark_work_dir), val(terminate_name), env(spark_uri)
+
+    script:
+    def spark_master_log_name = get_spark_master_log(spark_work_dir)
+    def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    """
+    while true; do
+
+        if [[ -e ${spark_master_log_name} ]]; then
+            test_uri=`grep -o "\\(spark://.*\$\\)" ${spark_master_log_name} || true`
+            if [[ ! -z \${test_uri} ]]; then
+                echo "Spark master started at \${test_uri}"
+                break
+            fi
+        fi
+
+        if [[ -e "${terminate_file_name}" ]]; then
+            echo "Terminate file ${terminate_file_name} found"
+            exit 1
+        fi
+
+	    sleep 5
+
+    done
+    spark_uri=\${test_uri}
+    """
+}
+
 process spark_worker {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
 
@@ -80,21 +147,20 @@ process spark_worker {
     memory "${worker_mem_in_gb+1} GB"
 
     input:
-    val(worker)
+    val(spark_master_uri)
+    val(worker_id)
     val(spark_conf)
     val(spark_work_dir)
     val(worker_cores)
     val(worker_mem_in_gb)
     val(terminate_name)
     
-    def lookup_ip_script = create_lookup_ip_script()
+    output:
+
     script:
-    spark_master_log_file = spark_master_log(spark_work_dir)
-    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
-    spark_master_uri = wait_for_master(spark_master_log_file, terminate_file_name)
-    spark_worker_log_file = spark_worker_log(worker, spark_work_dir)
-    remove_log_file(spark_worker_log_file)
-    spark_config_name = spark_config_name(spark_conf, spark_work_dir)
+    def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    def spark_worker_log_file = get_spark_worker_log(spark_work_dir, worker_id)
+    def spark_config_name = get_spark_config_name(spark_conf, spark_work_dir)
     def spark_config_env
     def spark_config_arg
     spark_worker_opts='export SPARK_WORKER_OPTS="-Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=30 -Dspark.worker.cleanup.appDataTtl=1"'
@@ -111,10 +177,11 @@ process spark_worker {
         """
     }
 
-    spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+    def spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+    def lookup_ip_script = create_lookup_ip_script()
     """
-    echo "Starting spark worker ${worker} - logging to ${spark_worker_log_file}"
-
+    echo "Starting spark worker ${worker_id} - logging to ${spark_worker_log_file}"
+    rm -f ${spark_worker_log_file}
     ${spark_env}
     ${lookup_ip_script}
 
@@ -141,29 +208,49 @@ process spark_worker {
     """
 }
 
-process wait_for_cluster {
+process wait_for_worker {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
 
     input:
+    val(spark_master_uri)
     val(spark_work_dir)
-    val(workers)
     val(terminate_name)
+    val(worker_id)
 
     output:
-    tuple val(spark_uri), val(spark_work_dir)
+    tuple val(spark_master_uri),
+          val(spark_work_dir),
+          val(terminate_name),
+          val(worker_id)
 
     script:
-    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
-    spark_uri = wait_for_master(spark_master_log(spark_work_dir), terminate_file_name)
-    wait_for_all_workers(spark_work_dir, workers, terminate_file_name)
+    def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    def spark_worker_log_file = get_spark_worker_log(spark_work_dir, worker_id)
     """
+    while true; do
+
+        if [[ -e "${spark_worker_log_file}" ]]; then
+            found=`grep -o "\\(Worker: Successfully registered with master ${spark_master_uri}\\)" ${spark_worker_log_file} || true`
+
+            if [[ ! -z \${found} ]]; then
+                echo "\${found}"
+                break
+            fi
+        fi
+
+        if [[ -e "${terminate_file_name}" ]]; then
+            echo "Terminate file ${terminate_file_name} found"
+            exit 1
+        fi
+
+	    sleep 5
+
+    done
     """
 }
 
 process spark_start_app {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
-    def lookup_ip_script = create_lookup_ip_script()
-
     cpus { driver_cores == 0 ? 1 : driver_cores }
     memory { driver_memory.replace('k'," KB").replace('m'," MB").replace('g'," GB").replace('t'," TB") }
 
@@ -172,7 +259,7 @@ process spark_start_app {
     val(spark_conf)
     val(spark_work_dir)
     val(workers)
-    val(executor_cores)
+    val(executor_cores_param)
     val(mem_per_core_in_gb)
     val(driver_cores)
     val(driver_memory)
@@ -189,50 +276,45 @@ process spark_start_app {
     
     script:
     // prepare submit args
-    submit_args_list = ["--master ${spark_uri}"]
+    def submit_args_list = []
+    submit_args_list << "--master" << spark_uri
     if (app_main != "") {
-        submit_args_list.add("--class ${app_main}")
+        submit_args_list << "--class ${app_main}"
     }
-    submit_args_list.add("--conf")
+    submit_args_list << "--conf"
+    def executor_cores = executor_cores_param as int
     submit_args_list.add("spark.executor.cores=${executor_cores}")
-    parallelism = workers * executor_cores
+    def parallelism = workers * executor_cores
     if (parallelism > 0) {
-        submit_args_list.add("--conf")
-        submit_args_list.add("spark.files.openCostInBytes=0")
-        submit_args_list.add("--conf")
-        submit_args_list.add("spark.default.parallelism=${parallelism}")
+        submit_args_list << "--conf" << "spark.files.openCostInBytes=0"
+        submit_args_list << "--conf" << "spark.default.parallelism=${parallelism}"
     }
-    executor_memory = calc_executor_memory(executor_cores, mem_per_core_in_gb)
+    def executor_memory = calc_executor_memory(executor_cores, mem_per_core_in_gb)
     if (executor_memory > 0) {
-        submit_args_list.add("--executor-memory")
-        submit_args_list.add("${executor_memory}g")
+        submit_args_list << "--executor-memory" << "${executor_memory}g"
     }
     if (driver_cores > 0) {
-        submit_args_list.add("--conf")
-        submit_args_list.add("spark.driver.cores=${driver_cores}")
+        submit_args_list << "--conf" << "spark.driver.cores=${driver_cores}"
     }
     if (driver_memory != '') {
-        submit_args_list.add("--driver-memory")
-        submit_args_list.add(driver_memory)
+        submit_args_list << "--driver-memory" << driver_memory
     }
-    sparkDriverJavaOpts = []
+    def sparkDriverJavaOpts = []
     if (driver_logconfig != null && driver_logconfig != '') {
-        submit_args_list.add("--conf")
-        submit_args_list.add("spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}")
-        sparkDriverJavaOpts.add("-Dlog4j.configuration=file://${driver_logconfig}")
+        submit_args_list << "--conf" << "spark.executor.extraJavaOptions=-Dlog4j.configuration=file://${driver_logconfig}"
+        sparkDriverJavaOpts << "-Dlog4j.configuration=file://${driver_logconfig}"
     }
     if (driver_stack_size != null && driver_stack_size != '') {
-        sparkDriverJavaOpts.add("-Xss${driver_stack_size}")
+        sparkDriverJavaOpts << "-Xss${driver_stack_size}"
     }
     if (sparkDriverJavaOpts.size() > 0) {
-        submit_args_list.add("--driver-java-options")
-        submit_args_list.add('"' + sparkDriverJavaOpts.join(' ') + '"')
+        submit_args_list << "--driver-java-options"
+        submit_args_list << '"' + sparkDriverJavaOpts.join(' ') + '"'
     }
-    submit_args_list.add(app)
-    submit_args_list.add(app_args)
-    submit_args = submit_args_list.join(' ')
-    deploy_mode_arg = ''
-    spark_config_name = spark_config_name(spark_conf, spark_work_dir)
+    submit_args_list << app << app_args
+    def submit_args = submit_args_list.join(' ')
+    def deploy_mode_arg = ''
+    def spark_config_name = get_spark_config_name(spark_conf, spark_work_dir)
     if (driver_deploy_mode != null && driver_deploy_mode != '') {
         deploy_mode_arg = "--deploy-mode ${driver_deploy_mode}"
     }
@@ -245,9 +327,9 @@ process spark_start_app {
         spark_config_arg = ""
         spark_config_env = "export SPARK_CONF_DIR=${spark_conf}"
     }
-    spark_driver_log_file = spark_driver_log(spark_work_dir, app_log)
-    spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
-
+    def spark_driver_log_file = get_spark_driver_log(spark_work_dir, app_log)
+    def spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
+    def lookup_ip_script = create_lookup_ip_script()
     """
     echo "Starting the spark driver"
 
@@ -285,7 +367,7 @@ process terminate_spark {
     tuple val(terminate_file_name), val(spark_work_dir)
 
     script:
-    terminate_file_name = terminate_file_name(spark_work_dir, terminate_name)
+    terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     """
     cat > ${terminate_file_name} <<EOF
     DONE
@@ -294,13 +376,13 @@ process terminate_spark {
     """
 }
 
-def terminate_file_name(working_dir, terminate_name) {
+def get_terminate_file_name(working_dir, terminate_name) {
     return terminate_name == null || terminate_name == ''
         ? "${working_dir}/terminate-spark"
         : "${working_dir}/${terminate_name}"
 }
 
-def spark_config_name(spark_conf, spark_dir) {
+def get_spark_config_name(spark_conf, spark_dir) {
     if (spark_conf == '') {
         return "${spark_dir}/spark-defaults.conf"
     } else {
@@ -321,31 +403,32 @@ def create_spark_env(spark_work_dir, spark_config_env, sparkLocation) {
     """
 }
 
-def create_default_spark_config(spark_local_dir, config_name) {
-    Properties sparkConfig = new Properties()
-    File configFile = new File(config_name)
-
-    sparkConfig.put("spark.rpc.askTimeout", "300s")
-    sparkConfig.put("spark.storage.blockManagerHeartBeatMs", "30000")
-    sparkConfig.put("spark.rpc.retry.wait", "30s")
-    sparkConfig.put("spark.kryoserializer.buffer.max", "1024m")
-    sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s")
-    sparkConfig.put("spark.driver.maxResultSize", "0")
-    sparkConfig.put("spark.worker.cleanup.enabled", "true")
-    sparkConfig.put("spark.local.dir", spark_local_dir.toString())
-
-    sparkConfig.store(configFile.newWriter(), null)
+def create_default_spark_config(config_name) {
+    def config_file = file(config_name)
+    return """
+        mkdir -p ${config_file.parent}
+        cat <<EOF > ${config_name}
+        spark.rpc.askTimeout=300s
+        spark.storage.blockManagerHeartBeatMs=30000
+        spark.rpc.retry.wait=30s
+        spark.kryoserializer.buffer.max=1024m
+        spark.core.connection.ack.wait.timeout=600s
+        spark.driver.maxResultSize=0
+        spark.worker.cleanup.enabled=true
+        spark.local.dir=${params.spark_local_dir}
+        EOF
+        """.stripIndent()
 }
 
-def spark_master_log(spark_work_dir) {
+def get_spark_master_log(spark_work_dir) {
     return "${spark_work_dir}/sparkmaster.log"
 }
 
-def spark_worker_log(worker, spark_work_dir) {
+def get_spark_worker_log(spark_work_dir, worker) {
     return "${spark_work_dir}/sparkworker-${worker}.log"
 }
 
-def spark_driver_log(spark_work_dir, log_name) {
+def get_spark_driver_log(spark_work_dir, log_name) {
     def log_file_name = log_name == null || log_name == "" ? "sparkdriver.log" : log_name
     return "${spark_work_dir}/${log_file_name}"
 }
@@ -394,57 +477,6 @@ def lookup_ip_inside_docker_script() {
     """
 }
 
-def wait_for_master(spark_master_log_name, terminate_file_name) {
-    def uri;
-    File terminate_file = new File(terminate_file_name)
-    while ((uri = search_spark_uri(spark_master_log_name)) == null) {
-        if (terminate_file.exists()) break
-
-        sleep(5000)
-    }
-    return uri
-}
-
-def search_spark_uri(spark_master_log_name) {
-    File spark_master_log_file = new File(spark_master_log_name)
-    if (!spark_master_log_file.exists()) 
-        return null
-
-    return spark_master_log_file.withReader { reader ->
-        def line = null
-        def uri = null
-        while ((line = reader.readLine()) != null) {
-            def i = line.indexOf("Starting Spark master at spark://");
-            if (i == -1) {
-                continue
-            } else {
-                l = "Starting Spark master at ".length()
-                uri = line.substring(i + l)
-                break
-            }
-        }
-        return uri
-    }
-}
-
-def wait_for_all_workers(spark_work_dir, workers, terminate_file_name) {
-    Set running_workers = []
-    File terminate_file = new File(terminate_file_name)
-    while (running_workers.size() == workers) {
-        if (terminate_file.exists()) break
-
-        for (int i = 0; i < workers; i++) {
-            def worker_id = i + 1
-            if (running_workers.contains(worker_id))
-                continue
-            spark_worker_log_file = spark_worker_log(worker_id, spark_work_dir)
-            if (check_worker_started(spark_worker_log_file))
-                running_workers.add(worker_id)
-        }
-        sleep(1000)
-    }
-}
-
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
     while true; do
@@ -463,27 +495,6 @@ def wait_to_terminate(pid_var, terminate_file_name) {
 
     done
     """
-}
-
-def check_worker_started(spark_worker_log_name) {
-    File spark_worker_file = new File(spark_worker_log_name)
-    if (!spark_worker_file.exists())
-        return false
-
-    return spark_worker_file.withReader { reader ->
-        def line = null
-        def found = false
-        while ((line = reader.readLine()) != null) {
-            def i = line.indexOf("Worker: Successfully registered with master spark://");
-            if (i == -1) {
-                continue
-            } else {
-                found = true
-                break
-            }
-        }
-        return found
-    }
 }
 
 def calc_executor_memory(cores, mem_per_core_in_gb) {
