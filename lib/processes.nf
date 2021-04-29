@@ -142,6 +142,7 @@ process wait_for_master {
 
         if (( \${SECONDS} > \${MAX_WAIT_SECS} )); then
             echo "Timed out after \${SECONDS} seconds while waiting for spark master <- ${spark_master_log_name}"
+            tail -25 ${spark_master_log_name}
             exit 2
         fi
 
@@ -264,6 +265,7 @@ process wait_for_worker {
 
         if (( \${SECONDS} > \${MAX_WAIT_SECS} )); then
             echo "Timed out after \${SECONDS} seconds while waiting for spark worker ${worker_id} for ${spark_master_uri} <- ${spark_worker_log_file}"
+            tail -25 ${spark_worker_log_file}
             exit 2
         fi
 

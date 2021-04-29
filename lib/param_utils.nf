@@ -19,7 +19,7 @@ def default_spark_params() {
     params.driver_logconfig = ''
     params.driver_deploy_mode = ''
     params.executor_cores = params.worker_cores
-    params.wait_for_spark_timeout_seconds = 30
+    params.wait_for_spark_timeout_seconds = 60
 
     return params
 }
