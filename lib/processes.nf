@@ -507,10 +507,9 @@ def lookup_ip_inside_docker_script() {
 
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
-    trap "kill \$${pid_var}" EXIT
+    trap "echo kill \$(ps --ppid \$${pid_var} -o pid=)" EXIT
 
     while true; do
-
         if ! kill -0 \$${pid_var} >/dev/null 2>&1; then
             echo "Process \$${pid_var} died"
             exit 1
@@ -521,7 +520,6 @@ def wait_to_terminate(pid_var, terminate_file_name) {
         fi
 
 	    sleep 1
-
     done
     """
 }
