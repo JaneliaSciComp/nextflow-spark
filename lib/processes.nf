@@ -44,6 +44,7 @@ process wait_for_path {
         sleep \${SLEEP_SECS}
         if (( \${SECONDS} < \${MAX_WAIT_SECS} )); then
             echo "Waiting for $f"
+            SECONDS=\$(( \${SECONDS} + \${SLEEP_SECS} ))
         else
             echo "Timed out after \${SECONDS} seconds while waiting for $f"
             exit 1
@@ -145,6 +146,8 @@ process wait_for_master {
         fi
 
         sleep \${SLEEP_SECS}
+        SECONDS=\$(( \${SECONDS} + \${SLEEP_SECS} ))
+
 
     done
     spark_uri=\${test_uri}
@@ -264,7 +267,8 @@ process wait_for_worker {
             exit 2
         fi
 
-	    sleep 1
+	    sleep \${SLEEP_SECS}
+        SECONDS=\$(( \${SECONDS} + \${SLEEP_SECS} ))
 
     done
     """
@@ -501,7 +505,7 @@ def lookup_ip_inside_docker_script() {
 
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
-    trap "echo kill \$${pid_var} && kill \$${pid_var}" EXIT
+    trap "kill \$${pid_var}" EXIT
 
     while true; do
 
