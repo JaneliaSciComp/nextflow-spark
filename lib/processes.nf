@@ -1,5 +1,6 @@
 process prepare_spark_work_dir {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+    label 'small'
 
     input:
     val(spark_work_dir)
@@ -23,6 +24,7 @@ process prepare_spark_work_dir {
 
 process wait_for_path {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+    label 'small'
 
     input:
     val(f)
@@ -52,8 +54,7 @@ process wait_for_path {
 
 process spark_master {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
-    cpus 1
-    memory '1 GB'
+    label 'small'
 
     input:
     val(spark_conf)
@@ -105,6 +106,7 @@ process spark_master {
 
 process wait_for_master {
     container { "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}" }
+    label 'small'
 
     input:
     val(spark_work_dir)
@@ -141,7 +143,6 @@ process wait_for_master {
 
 process spark_worker {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
-
     cpus { worker_cores }
     // 1 GB of overhead for the worker itself, the rest for its executors
     memory "${worker_mem_in_gb+1} GB"
@@ -210,6 +211,7 @@ process spark_worker {
 
 process wait_for_worker {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+    label 'small'
 
     input:
     val(spark_master_uri)
@@ -358,6 +360,7 @@ process spark_start_app {
 
 process terminate_spark {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
+    label 'small'
 
     input:
     val(spark_work_dir)
