@@ -122,6 +122,7 @@ process wait_for_master {
     """
     SLEEP_SECS="\${SLEEP_SECS:-1}"
     MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
+    SECONDS=0
 
     while true; do
 
@@ -240,6 +241,7 @@ process wait_for_worker {
     """
     SLEEP_SECS="\${SLEEP_SECS:-1}"
     MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
+    SECONDS=0
 
     while true; do
 
