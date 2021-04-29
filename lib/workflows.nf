@@ -92,6 +92,10 @@ workflow spark_cluster {
         workers_with_work_dirs.map { it[1] }, // spark app terminate name
         workers_with_work_dirs.map { it[3] } // worker number
     )
+    | map {
+        log.debug "Spark worker $it - started"
+        it
+    }
     | groupTuple(by: [0,1,2]) // wait for all workers to start
     | map {
         it[0..1]
@@ -135,20 +139,15 @@ workflow run_spark_app {
     )
 
     // run the app on the cluster
-    def spark_uri = spark_cluster_res 
-    | map {
-        log.debug "Created spark cluster: $it"
-        it[0] 
-    }
     def spark_app_res = run_spark_app_on_existing_cluster(
-        spark_uri,
+        spark_cluster_res.map { it[0] }, // spark URI
         spark_app,
         spark_app_entrypoint,
         spark_app_args,
         spark_app_log,
         spark_app_terminate_name,
         spark_conf,
-        spark_work_dir,
+        spark_cluster_res.map { it[1] }, // spark working dir
         spark_workers,
         spark_executor_cores,
         spark_gbmem_per_core,

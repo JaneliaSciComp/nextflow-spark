@@ -35,7 +35,7 @@ process wait_for_path {
     script:
     """
     SLEEP_SECS="\${SLEEP_SECS:-1}"
-    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-30}"
+    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
 
     echo "Checking for $f"
     SECONDS=0
@@ -100,6 +100,7 @@ process spark_master {
     ${spark_config_arg} \
     &> ${spark_master_log_file} &
     spid=\$!
+
     ${wait_to_terminate('spid', terminate_file_name)}
     """
 }
@@ -119,6 +120,9 @@ process wait_for_master {
     def spark_master_log_name = get_spark_master_log(spark_work_dir)
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     """
+    SLEEP_SECS="\${SLEEP_SECS:-1}"
+    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
+
     while true; do
 
         if [[ -e ${spark_master_log_name} ]]; then
@@ -134,7 +138,12 @@ process wait_for_master {
             exit 1
         fi
 
-	    sleep 5
+        if (( \${SECONDS} > \${MAX_WAIT_SECS} )); then
+            echo "Timed out after \${SECONDS} seconds while waiting for spark master <- ${spark_master_log_name}"
+            exit 2
+        fi
+
+        sleep \${SLEEP_SECS}
 
     done
     spark_uri=\${test_uri}
@@ -229,6 +238,9 @@ process wait_for_worker {
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     def spark_worker_log_file = get_spark_worker_log(spark_work_dir, worker_id)
     """
+    SLEEP_SECS="\${SLEEP_SECS:-1}"
+    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
+
     while true; do
 
         if [[ -e "${spark_worker_log_file}" ]]; then
@@ -245,7 +257,12 @@ process wait_for_worker {
             exit 1
         fi
 
-	    sleep 5
+        if (( \${SECONDS} > \${MAX_WAIT_SECS} )); then
+            echo "Timed out after \${SECONDS} seconds while waiting for spark worker ${worker_id} for ${spark_master_uri} <- ${spark_worker_log_file}"
+            exit 2
+        fi
+
+	    sleep 1
 
     done
     """
@@ -482,6 +499,8 @@ def lookup_ip_inside_docker_script() {
 
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
+    trap "echo kill \$${pid_var} && kill \$${pid_var}" EXIT
+
     while true; do
 
         if ! kill -0 \$${pid_var} >/dev/null 2>&1; then
@@ -490,7 +509,6 @@ def wait_to_terminate(pid_var, terminate_file_name) {
         fi
 
         if [[ -e "${terminate_file_name}" ]] ; then
-            kill \$${pid_var}
             break
         fi
 
