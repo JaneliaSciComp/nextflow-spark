@@ -507,7 +507,7 @@ def lookup_ip_inside_docker_script() {
 
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
-    trap "kill \$(ps --ppid \$${pid_var} --pid \$${pid_var} -o pid=)" EXIT
+    trap "kill -9 \$${pid_var}" EXIT
 
     while true; do
 
