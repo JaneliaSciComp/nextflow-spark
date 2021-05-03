@@ -34,10 +34,9 @@ process wait_for_path {
 
     script:
     """
-    SLEEP_SECS="\${SLEEP_SECS:-1}"
-    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
-
     echo "Checking for $f"
+    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
+    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
     SECONDS=0
 
     while ! test -e "$f"; do
@@ -121,8 +120,8 @@ process wait_for_master {
     def spark_master_log_name = get_spark_master_log(spark_work_dir)
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     """
-    SLEEP_SECS="\${SLEEP_SECS:-1}"
-    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
+    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
+    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
     SECONDS=0
 
     while true; do
@@ -243,8 +242,8 @@ process wait_for_worker {
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     def spark_worker_log_file = get_spark_worker_log(spark_work_dir, worker_id)
     """
-    SLEEP_SECS="\${SLEEP_SECS:-1}"
-    MAX_WAIT_SECS="\${MAX_WAIT_SECS:-${params.wait_for_spark_timeout_seconds}}"
+    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
+    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
     SECONDS=0
 
     while true; do

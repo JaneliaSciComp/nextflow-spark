@@ -6,7 +6,7 @@ include {
     default_spark_params;
 } from './lib/param_utils'
 
-final_params = params + default_spark_params()
+final_params = default_spark_params() + params
 
 include {
     run_spark_app;

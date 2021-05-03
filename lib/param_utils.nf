@@ -1,25 +1,24 @@
 def default_spark_params() {
-    params = [:]
-
-    params.spark_container_repo = 'registry.int.janelia.org/janeliascicomp'
-    params.spark_container_name = 'spark'
-    params.spark_container_version = '3.0.1-hadoop3.2'
-    params.spark_local_dir = '/tmp'
-    params.workers = 3
-    params.app = 'local/app.jar'
-    params.app_main = ''
-    params.app_args = ''
-    params.app_log = ''
-    params.spark_conf = ''
-    params.worker_cores = 1
-    params.gb_per_core = 15
-    params.driver_cores = 1
-    params.driver_memory = '1g'
-    params.driver_stack_size =  ''
-    params.driver_logconfig = ''
-    params.driver_deploy_mode = ''
-    params.executor_cores = params.worker_cores
-    params.wait_for_spark_timeout_seconds = 60
-
-    return params
+    [
+        spark_container_repo : 'registry.int.janelia.org/janeliascicomp',
+        spark_container_name : 'spark',
+        spark_container_version : '3.0.1-hadoop3.2',
+        spark_local_dir : '/tmp',
+        workers : 3,
+        app : 'local/app.jar',
+        app_main : '',
+        app_args : '',
+        app_log : '',
+        spark_conf : '',
+        worker_cores : 1,
+        gb_per_core : 15,
+        driver_cores : 1,
+        driver_memory : '1g',
+        driver_stack_size :  '',
+        driver_logconfig : '',
+        driver_deploy_mode : '',
+        executor_cores : 1,
+        wait_for_spark_timeout_seconds : 60,
+        sleep_between_timeout_checks_seconds : 1,
+    ]
 }
