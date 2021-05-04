@@ -11,12 +11,17 @@ process prepare_spark_work_dir {
 
     script:
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    def spark_master_log_file = get_spark_master_log(spark_work_dir)
+    def spark_worker_log_files = get_spark_worker_log(spark_work_dir, '*')
     log.debug "Spark work directory: ${spark_work_dir}"
     """
+    rm -f ${spark_master_log_file} || true
+    rm -f ${spark_worker_log_files} || true
+
     if [[ ! -d "${spark_work_dir}" ]] ; then
         mkdir -p "${spark_work_dir}"
     else
-        rm -f "${terminate_file_name}"
+        rm -f "${terminate_file_name}" || true
     fi
     echo "Write test" > "${spark_work_dir}/.writetest"
     """
@@ -83,7 +88,7 @@ process spark_master {
     def lookup_ip_script = create_lookup_ip_script()
     """
     echo "Starting spark master - logging to ${spark_master_log_file}"
-    rm -f ${spark_master_log_file}
+    rm -f ${spark_master_log_file} || true
 
     ${create_spark_config}
     ${spark_env}
@@ -195,7 +200,7 @@ process spark_worker {
     def lookup_ip_script = create_lookup_ip_script()
     """
     echo "Starting spark worker ${worker_id} - logging to ${spark_worker_log_file}"
-    rm -f ${spark_worker_log_file}
+    rm -f ${spark_worker_log_file} || true
     ${spark_env}
     ${lookup_ip_script}
 

@@ -18,7 +18,7 @@ def default_spark_params() {
         driver_logconfig : '',
         driver_deploy_mode : '',
         executor_cores : 1,
-        wait_for_spark_timeout_seconds : 60,
-        sleep_between_timeout_checks_seconds : 1,
+        wait_for_spark_timeout_seconds : 600,
+        sleep_between_timeout_checks_seconds : 5,
     ]
 }
