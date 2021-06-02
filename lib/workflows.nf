@@ -22,7 +22,6 @@ workflow spark_cluster_start {
     spark_app_terminate_name
 
     main:
-    
     res = spark_cluster(spark_conf, 
         spark_work_dir,
         spark_workers,
