@@ -20,5 +20,6 @@ def default_spark_params() {
         executor_cores : 1,
         wait_for_spark_timeout_seconds : 600,
         sleep_between_timeout_checks_seconds : 5,
+        max_connect_retries : 64,
     ]
 }

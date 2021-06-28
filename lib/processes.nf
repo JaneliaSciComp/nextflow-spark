@@ -182,7 +182,15 @@ process spark_worker {
     def spark_config_name = get_spark_config_name(spark_conf, spark_work_dir)
     def spark_config_env
     def spark_config_arg
-    spark_worker_opts='export SPARK_WORKER_OPTS="-Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=30 -Dspark.worker.cleanup.appDataTtl=1"'
+    def spark_worker_opts_list = []
+    spark_worker_opts_list << "spark.worker.cleanup.enabled=true"
+    spark_worker_opts_list << "spark.worker.cleanup.interval=30"
+    spark_worker_opts_list << "spark.worker.cleanup.appDataTtl=1"
+    spark_worker_opts_list << "spark.port.maxRetries=${params.max_connect_retries}"
+    def spark_worker_opts_string = spark_worker_opts_list.inject('') {
+        arg, item -> "${arg} -D${item}"
+    }
+    def spark_worker_opts="export SPARK_WORKER_OPTS=\"${spark_worker_opts_string}\""
     if (spark_config_name != '') {
         spark_config_arg = "--properties-file ${spark_config_name}"
         spark_config_env = """
