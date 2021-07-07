@@ -4,6 +4,7 @@ def default_spark_params() {
         spark_container_name : 'spark',
         spark_container_version : '3.0.1-hadoop3.2',
         spark_local_dir : '/tmp',
+        spark_work_dir : "${launchDir}/spark",
         workers : 3,
         app : 'local/app.jar',
         app_main : '',
