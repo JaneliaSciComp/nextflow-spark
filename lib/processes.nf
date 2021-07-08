@@ -11,49 +11,15 @@ process prepare_spark_work_dir {
 
     script:
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
-    def spark_master_log_file = get_spark_master_log(spark_work_dir)
-    def spark_worker_log_files = get_spark_worker_log(spark_work_dir, '*')
+    def write_session_id = create_write_session_id_script(spark_work_dir)
     log.debug "Spark work directory: ${spark_work_dir}"
     """
-    rm -f ${spark_master_log_file} || true
-    rm -f ${spark_worker_log_files} || true
-
     if [[ ! -d "${spark_work_dir}" ]] ; then
         mkdir -p "${spark_work_dir}"
     else
-        rm -f "${terminate_file_name}" || true
+        rm -f ${spark_work_dir}/* || true
     fi
-    echo "Write test" > "${spark_work_dir}/.writetest"
-    """
-}
-
-process wait_for_path {
-    container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
-    label 'small'
-
-    input:
-    val(f)
-
-    output:
-    val(f)
-
-    script:
-    """
-    echo "Checking for $f"
-    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
-    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
-    SECONDS=0
-
-    while ! test -e "$f"; do
-        sleep \${SLEEP_SECS}
-        if (( \${SECONDS} < \${MAX_WAIT_SECS} )); then
-            echo "Waiting for $f"
-            SECONDS=\$(( \${SECONDS} + \${SLEEP_SECS} ))
-        else
-            echo "Timed out after \${SECONDS} seconds while waiting for $f"
-            exit 1
-        fi
-    done
+    ${write_session_id}
     """
 }
 
@@ -86,8 +52,11 @@ process spark_master {
     }
     def spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     def lookup_ip_script = create_lookup_ip_script()
+    def check_session_id = create_check_session_id_script(spark_work_dir)
     """
     echo "Starting spark master - logging to ${spark_master_log_file}"
+    ${check_session_id}
+
     rm -f ${spark_master_log_file} || true
 
     ${create_spark_config}
@@ -124,10 +93,9 @@ process wait_for_master {
     script:
     def spark_master_log_name = get_spark_master_log(spark_work_dir)
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    def check_session_id = create_check_session_id_script(spark_work_dir)
     """
-    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
-    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
-    SECONDS=0
+    ${check_session_id}
 
     while true; do
 
@@ -206,8 +174,11 @@ process spark_worker {
 
     def spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     def lookup_ip_script = create_lookup_ip_script()
+    def check_session_id = create_check_session_id_script(spark_work_dir)
     """
     echo "Starting spark worker ${worker_id} - logging to ${spark_worker_log_file}"
+    ${check_session_id}
+
     rm -f ${spark_worker_log_file} || true
     ${spark_env}
     ${lookup_ip_script}
@@ -254,10 +225,9 @@ process wait_for_worker {
     script:
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     def spark_worker_log_file = get_spark_worker_log(spark_work_dir, worker_id)
+    def check_session_id = create_check_session_id_script(spark_work_dir)
     """
-    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
-    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
-    SECONDS=0
+    ${check_session_id}
 
     while true; do
 
@@ -281,7 +251,7 @@ process wait_for_worker {
             exit 2
         fi
 
-	    sleep \${SLEEP_SECS}
+        sleep \${SLEEP_SECS}
         SECONDS=\$(( \${SECONDS} + \${SLEEP_SECS} ))
 
     done
@@ -369,8 +339,10 @@ process spark_start_app {
     def spark_driver_log_file = get_spark_driver_log(spark_work_dir, app_log)
     def spark_env = create_spark_env(spark_work_dir, spark_config_env, task.ext.sparkLocation)
     def lookup_ip_script = create_lookup_ip_script()
+    def check_session_id = create_check_session_id_script(spark_work_dir)
     """
     echo "Starting the spark driver"
+    ${check_session_id}
 
     ${spark_env}
 
@@ -408,7 +380,10 @@ process terminate_spark {
 
     script:
     terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
+    def check_session_id = create_check_session_id_script(spark_work_dir)
     """
+    ${check_session_id}
+
     cat > ${terminate_file_name} <<EOF
     DONE
     EOF
@@ -517,6 +492,47 @@ def lookup_ip_inside_docker_script() {
     """
 }
 
+def create_write_session_id_script(spark_work_dir) {
+    """
+    echo "Writing ${workflow.sessionId} to ${spark_work_dir}/.sessionId"
+    echo "${workflow.sessionId}" > "${spark_work_dir}/.sessionId"
+    """
+}
+
+def create_check_session_id_script(spark_work_dir) {
+    """
+    SESSION_FILE="$spark_work_dir/.sessionId"   
+    echo "Checking for \$SESSION_FILE"
+    SLEEP_SECS=${params.sleep_between_timeout_checks_seconds}
+    MAX_WAIT_SECS=${params.wait_for_spark_timeout_seconds}
+    SECONDS=0
+
+    while ! test -e "\$SESSION_FILE"; do
+        sleep \${SLEEP_SECS}
+        if (( \${SECONDS} < \${MAX_WAIT_SECS} )); then
+            echo "Waiting for \$SESSION_FILE"
+            SECONDS=\$(( \${SECONDS} + \${SLEEP_SECS} ))
+        else
+            echo "-------------------------------------------------------------------------------"
+            echo "ERROR: Timed out after \${SECONDS} seconds while waiting for \$SESSION_FILE    "
+            echo "Make sure that your --spark_work_dir is accessible to all nodes in the cluster "
+            echo "-------------------------------------------------------------------------------"
+            exit 1
+        fi
+    done
+
+    if ! grep -F -x -q "${workflow.sessionId}" \$SESSION_FILE
+    then
+        echo "------------------------------------------------------------------------------"
+        echo "ERROR: session id in \$SESSION_FILE does not match current session            "
+        echo "Make sure that your --spark_work_dir is accessible to all nodes in the cluster"
+        echo "and that you are not running multiple pipelines with the same --spark_work_dir"
+        echo "------------------------------------------------------------------------------"
+        exit 1
+    fi
+    """
+}
+
 def wait_to_terminate(pid_var, terminate_file_name) {
     """
     trap "kill -9 \$${pid_var}" EXIT
@@ -532,7 +548,7 @@ def wait_to_terminate(pid_var, terminate_file_name) {
             break
         fi
 
-	    sleep 1
+        sleep 1
     done
     """
 }

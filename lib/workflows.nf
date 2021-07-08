@@ -5,14 +5,13 @@ include {
     spark_start_app;
     terminate_spark;
     wait_for_master;
-    wait_for_path;
     wait_for_worker;
 } from './processes'
 
-/**
+/** 
  * Start a spark cluster
  */
-workflow spark_cluster_start {
+workflow spark_cluster {
     take:
     spark_conf
     spark_work_dir
@@ -22,40 +21,8 @@ workflow spark_cluster_start {
     spark_app_terminate_name
 
     main:
-    res = spark_cluster(spark_conf, 
-        spark_work_dir,
-        spark_workers,
-        spark_worker_cores,
-        spark_worker_cores * spark_gbmem_per_core,
-        spark_app_terminate_name)
-
-    log.debug "Spark cluster started:"
-    log.debug "  Working directory: ${spark_work_dir}"
-    log.debug "  Number of workers: ${spark_workers}"
-    log.debug "  Cores per worker: ${spark_worker_cores}"
-    log.debug "  GB per worker core: ${spark_gbmem_per_core}"
-
-    emit:
-    res
-}
-
-/** 
- * Start a spark cluster
- * Deprecated: use spark_cluster_start 
- */
-workflow spark_cluster {
-    take:
-    spark_conf
-    spark_work_dir
-    spark_workers
-    spark_worker_cores
-    total_spark_worker_mem_in_gb
-    spark_app_terminate_name
-
-    main:
     // prepare spark cluster params
     def work_dir = prepare_spark_work_dir(spark_work_dir, spark_app_terminate_name)
-    | wait_for_path
 
     // start master
     spark_master(
@@ -80,7 +47,7 @@ workflow spark_cluster {
         spark_conf,
         workers_with_work_dirs.map { it[0] }, // spark work dir
         spark_worker_cores,
-        total_spark_worker_mem_in_gb,
+        spark_worker_cores * spark_gbmem_per_core,
         workers_with_work_dirs.map { it[1] }, // spark app terminate name
     )
 
@@ -97,6 +64,11 @@ workflow spark_cluster {
     }
     | groupTuple(by: [0,1,2]) // wait for all workers to start
     | map {
+        log.debug "Spark cluster started:"
+        log.debug "  Spark work directory: ${it[1]}"
+        log.debug "  Number of workers: ${spark_workers}"
+        log.debug "  Cores per worker: ${spark_worker_cores}"
+        log.debug "  GB per worker core: ${spark_gbmem_per_core}"
         it[0..1]
     } // [ spark_uri, spark_work_dir ]
 
