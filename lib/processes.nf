@@ -380,7 +380,7 @@ process terminate_spark {
 
     script:
     terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
-    def check_session_id = create_check_session_id_script(spark_work_dir)
+    check_session_id = create_check_session_id_script(spark_work_dir)
     """
     ${check_session_id}
 
