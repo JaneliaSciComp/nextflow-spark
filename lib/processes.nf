@@ -12,8 +12,10 @@ process prepare_spark_work_dir {
     script:
     def terminate_file_name = get_terminate_file_name(spark_work_dir, terminate_name)
     def write_session_id = create_write_session_id_script(spark_work_dir)
+    log.debug "Spark local directory: ${params.spark_local_dir}"
     log.debug "Spark work directory: ${spark_work_dir}"
     """
+    mkdir -p "${params.spark_local_dir}"
     if [[ ! -d "${spark_work_dir}" ]] ; then
         mkdir -p "${spark_work_dir}"
     else
