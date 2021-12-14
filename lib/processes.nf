@@ -65,19 +65,13 @@ process spark_master {
     ${spark_env}
     ${lookup_ip_script}
 
-    echo "\
-    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
-    -h \$SPARK_LOCAL_IP \
-    ${spark_config_arg} \
-    "
-
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.master.Master \
     -h \$SPARK_LOCAL_IP \
     ${spark_config_arg} \
     &> ${spark_master_log_file} &
     spid=\$!
 
-    ${wait_to_terminate('spid', terminate_file_name)}
+    ${wait_to_terminate('spid', terminate_file_name, spark_master_log_file)}
     """
 }
 
@@ -116,7 +110,7 @@ process wait_for_master {
 
         if (( \${SECONDS} > \${MAX_WAIT_SECS} )); then
             echo "Timed out after \${SECONDS} seconds while waiting for spark master <- ${spark_master_log_name}"
-            tail -25 ${spark_master_log_name}
+            cat ${spark_master_log_name} >&2
             exit 2
         fi
 
@@ -204,7 +198,7 @@ process spark_worker {
     ${spark_config_arg} \
     &> ${spark_worker_log_file} &
     spid=\$!
-    ${wait_to_terminate('spid', terminate_file_name)}
+    ${wait_to_terminate('spid', terminate_file_name, spark_worker_log_file)}
     """
 }
 
@@ -248,8 +242,8 @@ process wait_for_worker {
         fi
 
         if (( \${SECONDS} > \${MAX_WAIT_SECS} )); then
-            echo "Timed out after \${SECONDS} seconds while waiting for spark worker ${worker_id} for ${spark_master_uri} <- ${spark_worker_log_file}"
-            tail -25 ${spark_worker_log_file}
+            echo "Spark worker ${worker_id} timed out after \${SECONDS} seconds while waiting for master ${spark_master_uri}"
+            cat ${spark_worker_log_file} >&2
             exit 2
         fi
 
@@ -350,22 +344,12 @@ process spark_start_app {
 
     ${lookup_ip_script}
 
-    echo "\
     ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.SparkSubmit \
     ${spark_config_arg} \
     ${deploy_mode_arg} \
     --conf spark.driver.host=\${SPARK_LOCAL_IP} \
     --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
-    ${submit_args} \
-    "
-
-    ${task.ext.sparkLocation}/bin/spark-class org.apache.spark.deploy.SparkSubmit \
-    ${spark_config_arg} \
-    ${deploy_mode_arg} \
-    --conf spark.driver.host=\${SPARK_LOCAL_IP} \
-    --conf spark.driver.bindAddress=\${SPARK_LOCAL_IP} \
-    ${submit_args} \
-    &> ${spark_driver_log_file}
+    ${submit_args}
     """
 }
 
@@ -535,18 +519,20 @@ def create_check_session_id_script(spark_work_dir) {
     """
 }
 
-def wait_to_terminate(pid_var, terminate_file_name) {
+def wait_to_terminate(pid_var, terminate_file_name, log_file) {
     """
-    trap "kill -9 \$${pid_var}" EXIT
+    trap "kill -9 \$${pid_var} &>/dev/null" EXIT
 
     while true; do
 
         if ! kill -0 \$${pid_var} >/dev/null 2>&1; then
             echo "Process \$${pid_var} died"
+            cat ${log_file} >&2
             exit 1
         fi
 
         if [[ -e "${terminate_file_name}" ]] ; then
+            cat ${log_file}
             break
         fi
 
