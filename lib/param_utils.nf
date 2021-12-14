@@ -3,7 +3,7 @@ def default_spark_params() {
         spark_container_repo : 'registry.int.janelia.org/janeliascicomp',
         spark_container_name : 'spark',
         spark_container_version : '3.0.1-hadoop3.2',
-        spark_local_dir : "/tmp/spark/${workflow.sessionId}",
+        spark_local_dir : "/tmp/spark-${workflow.sessionId}",
         spark_work_dir : "${workDir}/spark/${workflow.sessionId}",
         workers : 3,
         app : 'local/app.jar',
