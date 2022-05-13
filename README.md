@@ -5,7 +5,7 @@ available at registry.int.janelia.org but if you need to
 push this to another registry or if you want to change it
 you can rebuild it:
 ```
-docker build -t registry.int.janelia.org/janeliascicomp/spark:3.0.1-hadoop3.2
+docker build -t registry.int.janelia.org/janeliascicomp/spark:3.0.1-hadoop3.2 -t multifish/spark:3.0.1-hadoop3.2 .
 ```
 
 ## Usage
