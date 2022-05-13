@@ -1,10 +1,10 @@
-FROM centos:8
+FROM oraclelinux:8
 
 ENV SPARK_VERSION=3.0.1
 ENV HADOOP_VERSION=3.2
 
 RUN dnf install -y \
-        wget \
+        tar wget \
         net-tools \
         java-1.8.0-openjdk.x86_64 \
         python3 \
