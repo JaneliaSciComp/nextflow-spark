@@ -507,6 +507,10 @@ def create_check_session_id_script(spark_work_dir) {
         fi
     done
 
+    echo "Found \$SESSION_FILE in \$SECONDS s"
+    # reset SECONDS for the next wait
+    SECONDS=0
+
     if ! grep -F -x -q "${workflow.sessionId}" \$SESSION_FILE
     then
         echo "------------------------------------------------------------------------------"
