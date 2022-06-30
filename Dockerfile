@@ -5,6 +5,7 @@ ENV HADOOP_VERSION=3.2
 
 RUN dnf install -y \
         tar wget \
+        hostname \
         net-tools \
         java-1.8.0-openjdk.x86_64 \
         python3 \
