@@ -460,6 +460,10 @@ def lookup_local_ip_script() {
     """
     SPARK_LOCAL_IP=`hostname -i | rev | cut -d' ' -f1 | rev`
     echo "Use Spark IP: \$SPARK_LOCAL_IP"
+    if [[ -z "\${SPARK_LOCAL_IP}" ]] ; then
+        echo "Could not determine local IP: SPARK_LOCAL_IP is empty"
+        exit 1
+    fi
     """
 }
 
@@ -475,6 +479,10 @@ def lookup_ip_inside_docker_script() {
             break
         fi
     done
+    if [[ -z "\${SPARK_LOCAL_IP}" ]] ; then
+        echo "Could not determine local IP: SPARK_LOCAL_IP is empty"
+        exit 1
+    fi
     """
 }
 
