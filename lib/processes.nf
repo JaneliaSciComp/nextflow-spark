@@ -78,6 +78,8 @@ process spark_master {
 process wait_for_master {
     container { "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}" }
     label 'small'
+    errorStrategy { task.exitStatus == 3 ? 'retry' : 'terminate' }
+    maxRetries 20
 
     input:
     val(spark_work_dir)
@@ -92,6 +94,12 @@ process wait_for_master {
     def check_session_id = create_check_session_id_script(spark_work_dir)
     """
     ${check_session_id}
+
+    if [[ ! -e ${spark_master_log_name} ]]; then
+        echo "Spark master has not been started yet"
+        sleep \${SLEEP_SECS}
+        exit 3
+    fi
 
     while true; do
 
@@ -205,6 +213,8 @@ process spark_worker {
 process wait_for_worker {
     container = "${params.spark_container_repo}/${params.spark_container_name}:${params.spark_container_version}"
     label 'small'
+    errorStrategy { task.exitStatus == 3 ? 'retry' : 'terminate' }
+    maxRetries 20
 
     input:
     val(spark_master_uri)
@@ -224,6 +234,12 @@ process wait_for_worker {
     def check_session_id = create_check_session_id_script(spark_work_dir)
     """
     ${check_session_id}
+
+    if [[ ! -e ${spark_worker_log_file} ]]; then
+        echo "Spark worker ${worker_id} has not been started"
+        sleep \${SLEEP_SECS}
+        exit 3
+    fi
 
     while true; do
 
