@@ -97,7 +97,7 @@ process wait_for_master {
 
     if [[ ! -e ${spark_master_log_name} ]]; then
         echo "Spark master has not been started yet"
-        sleep \${SLEEP_SECS}
+        sleep \$((SLEEP_SECS * 5))
         exit 3
     fi
 
@@ -237,7 +237,7 @@ process wait_for_worker {
 
     if [[ ! -e ${spark_worker_log_file} ]]; then
         echo "Spark worker ${worker_id} has not been started"
-        sleep \${SLEEP_SECS}
+        sleep \$((SLEEP_SECS * 5))
         exit 3
     fi
 
