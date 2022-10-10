@@ -4,9 +4,13 @@ This repo contains a reusable set of Nextflow subworkflows and processes which c
 
 ![Example pipeline diagram](nextflow-spark.png)
 
-In the above example, we start a Spark cluster and run several Spark applications to process and stitch large bioimages. Thse resulting subworkflow can be included as a part of any Nextflow pipeline, and requires no special infrastructure for Spark.
+In the above example, all of the green boxes represent Nextflow processes. We start a Spark cluster and run several Spark applications to process and stitch large bioimages. The resulting subworkflow can be included as a part of any Nextflow pipeline, and requires no special infrastructure for Spark.
 
-## Building the container
+We start by establishing a directory on shared storage that can be shared by all the Spark processes. We then start a long-running Spark master process, and a watcher which waits for the master to be ready by tailing its log file. Once the master is ready, we launch the workers, along with their own watchers. The watchers are key, because they return control to the Nextflow pipeline as soon as the Spark cluster is ready. Once the Spark cluster is running, we can submit applications to it as regular Nextflow processes which run as part of the workflow. When these Spark applications are finished, we write a termination file to a particular location on disk. The Spark master and worker tasks are watching for that file, and they terminate as soon as they see it.
+
+## Usage
+
+### Building a container
 
 The provided container includes everything necessary to run Apache Spark. You can also extend this container to include your Spark Apps by creating a Dockerfile like this: 
 
@@ -15,7 +19,7 @@ FROM multifish/spark:3.0.1-hadoop3.2
 COPY app.jar /app/app.jar
 ```
 
-## Usage
+### Running 
 
 You must have [Nextflow](https://www.nextflow.io) and [Singularity](https://sylabs.io) or [Docker](https://www.docker.com/) installed before running the pipeline.
 
