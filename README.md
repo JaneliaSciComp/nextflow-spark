@@ -1,7 +1,7 @@
 # Spark on Nextflow
 
 > [!IMPORTANT]
-> This repo is deprecated as we have a new way to run Spark using [nf-core-compatible modules](https://github.com/JaneliaSciComp/nextflow-modules).
+> This repo will be deprecated as we have a new way to run Spark using [nf-core-compatible modules](https://github.com/JaneliaSciComp/nextflow-modules).
 
 This repo contains a reusable set of Nextflow subworkflows and processes which create transient Apache Spark clusters on any infrastructure where Nextflow runs. The only requirement is a shared filesystem which is accessible by all of the nodes that will be running the Spark processes.
 
